@@ -14,7 +14,7 @@ apt-get install build-essential git-core
 To get source use git:
 
 ```
-git clone <git_rep_uri>
+git clone https://github.com/angryoyc/easygcoder.git
 ```
 
 Build:
