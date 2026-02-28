@@ -1,0 +1,58 @@
+#!/bin/sh
+
+N="${1:-1}"
+
+echo "Batch #${N}:"
+
+## Milling Bottom Layer
+easygcoder \
+   -i ./gerber/${N}/Gerber_BottomLayer.GBL \
+   -d ./gerber/${N}/Drill_PTH_Through.DRL \
+   -d ./gerber/${N}/Drill_NPTH_Through.DRL \
+   -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
+   \
+   -s ./gcode/${N}/BottomLayer.svg \
+   -o ./gcode/${N}/BottomLayer.gcode \
+   -m y
+
+## Drill all holes (bottom side)
+easygcoder \
+   -d ./gerber/${N}/Drill_PTH_Through.DRL \
+   -d ./gerber/${N}/Drill_NPTH_Through.DRL \
+   \
+   -s ./gcode/${N}/BottomLayerDrill.svg \
+   -b ./gcode/${N}/BottomLayerDrill.gcode \
+   -m y
+
+## Milling Top Layer
+easygcoder \
+   -i ./gerber/${N}/Gerber_TopLayer.GTL \
+   -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
+   -d ./gerber/${N}/Drill_PTH_Through.DRL \
+   -d ./gerber/${N}/Drill_NPTH_Through.DRL \
+   \
+   -s ./gcode/${N}/TopLayer.svg \
+   -o ./gcode/${N}/TopLayer.gcode
+
+
+## Drill big holes (top side)
+easygcoder \
+   -d ./gerber/${N}/Drill_NPTH_Through.DRL \
+   \
+   -s ./gcode/${N}/TopLayerDrill_bigholes.svg \
+   -b ./gcode/${N}/TopLayerDrill_bigholes.gcode
+
+## Drill all holes (top side)
+easygcoder \
+   -d ./gerber/${N}/Drill_PTH_Through.DRL \
+   \
+   -s ./gcode/${N}/TopLayerDrill.svg \
+   -b ./gcode/${N}/TopLayerDrill.gcode
+
+## Milling Outline (top side)
+easygcoder \
+   -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
+   \
+   -s ./gcode/${N}/TopLayerOutline.svg \
+   -o ./gcode/${N}/TopLayerOutline.gcode
+

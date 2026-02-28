@@ -1,0 +1,18 @@
+svg_m = 10
+svg_width = 1920
+svg_height = 1080
+svg_margin = 50
+tool_d = 0.200
+drill_safe = 5
+drill_start = 0.000
+drill_deep = -2.400
+drill_step = -0.600
+drill_feed = 50
+milling_safe = 5
+milling_start = 0.100
+milling_deep = -0.100
+milling_step = -0.200
+milling_feed = 100
+dril=0-1.5=>1.0
+dril=1.5-2.5=>2.0
+dril=2.5~3.5=>3.0

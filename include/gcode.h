@@ -1,0 +1,10 @@
+void gcode_ini();
+void gcode_internal_ensure_tool_up(FILE* output_fd);
+void gcode_internal_ensure_tool_down(FILE* output_fd);
+void gcode_make_header(FILE* output_fd);
+void gcode_make_footer(FILE* output_fd);
+void gcode_moveto(FILE* output_fd, Point_t* p);
+void gcode_cut_line(FILE* output_fd, Line_t* line);
+void gcode_cut_arc(FILE* output_fd, Arc_t* arc);
+void gcode_drop_position();
+void gcode_drill(FILE* output_fd, double x, double y, double d);

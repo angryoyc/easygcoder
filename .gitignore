@@ -1,0 +1,6 @@
+bin/
+trash/
+rcm
+src/define.h
+gcode/*
+gerber/*
