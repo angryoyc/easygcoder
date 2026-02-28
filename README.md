@@ -1,20 +1,24 @@
 # EasyGcoder
+
 An application for converting Gerber files received from EasyEDA into finished G-Code.
 
 ## Install
 
 Prepare:
+
 ```
 apt-get update
 apt-get install build-essential git-core
 ```
 
 To get source use git:
+
 ```
 git clone <git_rep_uri>
 ```
 
 Build:
+
 ```
 cd ./easygcoder
 ```
@@ -30,6 +34,7 @@ make install
 ## Using
 
 Make the work directory:
+
 ```
 mkdir ~/workdir
 cd ~/workdir
@@ -42,12 +47,15 @@ easygcoder init
 ```
 
 Finding the location of the main configuration file:
+
 ```
 easygcoder -p
 ```
+
 Use value of "Default config" parameter. For example, `/etc/easygcoder/easygcoder.conf` (it defined in `.env`)
 
 Edit config:
+
 ```
 sudo nano /etc/easygcoder/easygcoder.conf
 ```
