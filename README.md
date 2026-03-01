@@ -2,6 +2,10 @@
 
 An application for converting Gerber files received from EasyEDA into finished G-Code.
 
+**WARNING! There's a known bug that may prevent some elements from being drawn. Therefore, when using this program, you must manually check for the presence of all circuit components, for example, using SVG. By using this program you act at your own risk.**
+
+
+
 ## Install
 
 Prepare:
