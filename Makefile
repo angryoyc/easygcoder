@@ -91,6 +91,8 @@ configure: clean
 	$(shell echo "#define MILLING_DEEP ${MILLING_DEEP}" >> ./include/define.h)
 	$(shell echo "#define MILLING_STEP ${MILLING_STEP}" >> ./include/define.h)
 	$(shell echo "#define MILLING_FEED ${MILLING_FEED}" >> ./include/define.h)
+	$(shell echo "#define SPINDEL_MODE ${SPINDEL_MODE}" >> ./include/define.h)
+	$(shell echo "#define SPINDEL_RPM ${SPINDEL_RPM}" >> ./include/define.h)
 	$(shell echo "#define CONFIGPATH \"${CONFIGPATH}\"" >> ./include/define.h)
 
 .PHONY: clean

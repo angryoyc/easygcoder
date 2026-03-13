@@ -7,7 +7,8 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <sys/stat.h>
-
+#include <limits.h>
+#include <errno.h>
 
 #include "../include/define.h"
 #include "../include/conf.h"
@@ -28,12 +29,20 @@
 #include "./copy_file.c"
 #include "../include/main.h"
 
-//char* end;
-//struct pair ** config;             // Ссылка на загруженные данные /etc/gb2gc.conf
-
+#define MAXCONFSOURCES 5
 
 uint8_t isfile( char* path ){
 	return ( access( path, F_OK ) == 0 )?1:0;
+}
+
+int parse_long(const char *str, int *result){
+	char *endptr;
+	errno = 0;
+	*result = strtol(str, &endptr, 10);
+	if (str == endptr) return -1; // Нет чисел для парсинга
+	if ((errno == ERANGE && (*result == LONG_MAX || *result == LONG_MIN)))  return -2; // Переполнение
+	if (errno != 0 && *result == 0) return -3; // Другая ошибка
+	return 0; // Успех
 }
 
 void message( int offset, char * format, ... ) {
@@ -43,14 +52,9 @@ void message( int offset, char * format, ... ) {
 	va_start(argv, format);
 	vsnprintf(str, 500, format, argv);
 	va_end(argv);
-	if( 1==1 ){ // варианты вывода - стандартный и отладочный
-		for( int i = 0; i<(2-offset); i++) printf("\033[1A");
-		printf("\r\033[K%s", str);
-		//printf("                                                                                           \r");
-		for( int i = 0; i<(2-offset); i++) printf("\n");
-	}else{
-		printf("%s\n", str);
-	}
+	for( int i = 0; i<(2-offset); i++) printf("\033[1A");
+	printf("\r\033[K%s", str);
+	for( int i = 0; i<(2-offset); i++) printf("\n");
 }
 
 void remove_negative_cont(Context_t* ctx){
@@ -83,6 +87,8 @@ void print_help(char* binname){
 	printf("  -d <filename>  Drill fileN (optional, up to 5)\n");
 	printf("  -f <filename>  Board outline file (optional)\n");
 	printf("  -m <axis>      Mirror along the axis x|y\n");
+	printf("  -l <mode>      Spindel mode 3|4\n");
+	printf("  -r <RPM>       Spindel rpm\n");
 	printf("options (output data):\n");
 	printf("  -s <filename>  Output file for SVG (optional)\n");
 	printf("  -o <filename>  Output file for milling g-code (optional)\n");
@@ -96,10 +102,13 @@ void print_help(char* binname){
 int main(int argc, char* argv[]) {
 	char* input_file = NULL;
 
-	char* drill_file[5] = { NULL, NULL, NULL, NULL, NULL };
+	char* drill_file[MAXCONFSOURCES];
+	memset( drill_file, 0x00, sizeof(char*) * MAXCONFSOURCES);
 	int drill_file_count = 0;
 
-	char* config_file[5] = { CONFIGPATH, NULL, NULL, NULL, NULL };
+	char* config_file[MAXCONFSOURCES];
+	memset( config_file, 0x00, sizeof(char*) * MAXCONFSOURCES);
+	 config_file[0] = CONFIGPATH;
 	int config_file_count = 1;
 
 	char* outline_file = NULL;
@@ -107,7 +116,6 @@ int main(int argc, char* argv[]) {
 	char* output_svg = NULL;
 	char* output_boring = NULL;
 	int print_params = 0;
-
 
 	Excellon_t exc = {
 		.tools = NULL,
@@ -143,19 +151,50 @@ int main(int argc, char* argv[]) {
 			}else if(strcmp(argv[i], "-i") == 0 && i + 1 < argc) {
 				input_file = argv[++i];
 			}else if (strcmp(argv[i], "-d") == 0 && i + 1 < argc) {
-				if( drill_file_count < 5 ){
+				if( drill_file_count < MAXCONFSOURCES ){
 					drill_file[drill_file_count++] = argv[++i];
+				}else{
+					fprintf(stderr, "Error: Too many drill files\n");
+					return 1;
 				}
 			}else if (strcmp(argv[i], "-f") == 0 && i + 1 < argc) {
 				outline_file = argv[++i];
 			}else if (strcmp(argv[i], "-c") == 0 && i + 1 < argc) {
-				if( config_file_count < 5 ){
+				if( config_file_count < MAXCONFSOURCES ){
 					config_file[config_file_count++] = argv[++i];
+				}else{
+					fprintf(stderr, "Error: Too many configs\n");
+					return 1;
 				}
 			}else if (strcmp(argv[i], "-m") == 0 && i + 1 < argc) {
 				char* m = argv[++i];
 				if( strcmp(m, "x") == 0 ) set_int_param(NULL, "mirror_x", 1);
 				if( strcmp(m, "y") == 0 ) set_int_param(NULL, "mirror_y", 1);
+
+			}else if (strcmp(argv[i], "-l") == 0 ) { // режим лазерной резки
+				char* m = argv[++i];
+				int mode;
+				if( parse_long(m , &mode ) == 0){
+					if( (mode == 3) || (mode == 4) ){
+						set_int_param(NULL, "spindel_mode", mode);
+					}else{
+						fprintf(stderr, "Error: Invalid spindel mode value: -l %s. Only 3 or 4 available\n", m);
+						return 1;
+					}
+				}else{
+					fprintf(stderr, "Error: Spindel mode value parsing error: -l %s\n", m);
+					return 1;
+				}
+
+			}else if (strcmp(argv[i], "-r") == 0 && i + 1 < argc) {
+				char* m = argv[++i];
+				int rpm;
+				if( parse_long(m , &rpm ) == 0){
+					set_int_param(NULL, "spindel_rpm", rpm);
+				}else{
+					fprintf(stderr, "Error: Invalid spindel rpm value: -r %s\n", m);
+					return 1;
+				}
 			}else if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
 				output_gcode = argv[++i];
 			}else if (strcmp(argv[i], "-s") == 0 && i + 1 < argc) {

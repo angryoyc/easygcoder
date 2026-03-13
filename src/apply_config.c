@@ -258,6 +258,9 @@ void apply_config(char* conffile){
 	set_dbl_param(config, "milling_step", MILLING_STEP, conffile);
 	set_int_param(config, "milling_feed", MILLING_FEED, conffile);
 
+	set_int_param(config, "spindel_mode", SPINDEL_MODE, conffile);
+	set_int_param(config, "spindel_rpm", SPINDEL_RPM, conffile);
+
 	set_drills(config, conffile);
 }
 

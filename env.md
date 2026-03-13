@@ -25,6 +25,9 @@ MILLING_DEEP = -0.1
 MILLING_STEP = -0.2
 MILLING_FEED = 100                    # milling feed rate
 
+SPINDEL_MODE = 0                      # Start spindel: 3 - CW; 4 - CCW;
+SPINDEL_RPM = 255                     # Spindel RPM;
+
 CONFIGPATH = /etc/easygcoder/easygcoder.conf
 
 ```

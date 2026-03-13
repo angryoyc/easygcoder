@@ -16,4 +16,6 @@
 #define MILLING_DEEP -0.1
 #define MILLING_STEP -0.2
 #define MILLING_FEED 100
+#define SPINDEL_MODE 0
+#define SPINDEL_RPM 255
 #define CONFIGPATH "/etc/easygcoder/easygcoder.conf"

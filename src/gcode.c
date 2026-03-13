@@ -33,6 +33,8 @@ typedef struct{
     double drill_deep;
     double drill_step;
     int    drill_feed;
+    int    spindel_mode;
+    int    spindel_rpm;
 } GcodeContext_t;
 
 
@@ -51,7 +53,9 @@ static GcodeContext_t gcd = {
     .drill_start    =  0.1,
     .drill_deep     = -2.3,
     .drill_step     = -0.4,
-    .drill_feed     = 50
+    .drill_feed     = 50,
+    .spindel_mode   = 0,
+    .spindel_rpm    = 255
 };
 
 static double round3(double v){ return round(v*1000.0)/1000.0; }
@@ -74,6 +78,9 @@ void gcode_ini(){
     gcd.drill_deep     = env_d("drill_deep");
     gcd.drill_step     = env_d("drill_step");
     gcd.drill_feed     = env_i("drill_feed");
+
+    gcd.spindel_mode     = env_i("spindel_mode");
+    gcd.spindel_rpm   = env_i("spindel_rpm");
 }
 
 
@@ -108,12 +115,15 @@ void gcode_make_header(FILE* output_fd){
     fprintf(output_fd, "G17\n");
     gcode_internal_ensure_tool_up(output_fd);
     fprintf(output_fd, "G0 Z%.3f\n", round3(gcd.milling_safe));
+    if( gcd.spindel_mode == 3 ) fprintf(output_fd, "M3 S%i\n", gcd.spindel_rpm );
+    if( gcd.spindel_mode == 4 ) fprintf(output_fd, "M4 S%i\n", gcd.spindel_rpm );
 }
 
 void gcode_make_footer(FILE* output_fd){
     gcode_internal_ensure_tool_up( output_fd );
     fprintf( output_fd, "G0 X0 Y0\n");
     fprintf( output_fd, "G0 Z%.3f\n", round3(gcd.tool_ch_height) );
+    if( gcd.spindel_mode>0 ) fprintf(output_fd, "M5\n");
     fprintf(output_fd, "M30\n");
     fprintf(output_fd, "%%\n");
 }
