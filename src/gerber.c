@@ -22,14 +22,30 @@
 #include "../include/main.h"
 
 #define MAX_APERTURES 100
+#define MAX_MACROS 100
 
 // Структура для хранения апертуры
 typedef struct {
     int number;
-    char type;  // 'C' - круг, 'R' - прямоугольник
+    char type;  // 'C' - круг, 'R' - прямоугольник, 'M' - макро
     double param1; // диаметр или ширина
     double param2; // высота (для прямоугольника)
+    char macro[10];
 } Aperture;
+
+// Структура для хранения координат
+typedef struct {
+	double x;
+	double y;
+} Coor;
+
+// Структура для хранения macros
+typedef struct {
+	char macro[10];
+	int  len;
+	Coor points[30];
+} Macro;
+
 
 // Структура для хранения состояния парсера
 typedef struct {
@@ -40,13 +56,15 @@ typedef struct {
     int is_metric;         // 1 = мм, 0 = дюймы
     Aperture apertures[MAX_APERTURES];
     int aperture_count;
+    Macro macros[MAX_MACROS];
+    int macros_count;
 } GerberState;
 
 // Функции-заглушки для рисования
 static int count = 0;
 
 void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double diameter, int debug ){
-	// Svg_env_t* env, 
+	// Svg_env_t* env,
 	//select_context("main");
 	//int debug = 0;
 	double d = env_d("tool_d");
@@ -99,8 +117,30 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 	find_all_conts();
 }
 
+Cont_t* poligon(double x, double y,  Macro* m, int mirror_x, int mirror_y){
+    return NULL;
+};
+
+void grb_macro_touch(double _x1, double _y1, Macro* m, int debug){
+	int mirror_x = env_i("mirror_x");
+	int mirror_y = env_i("mirror_y");
+	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
+	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
+	double d = env_d("tool_d");
+	d = d/2;
+	Cont_t* cont = poligon(x1, y1, m, mirror_x, mirror_y);
+	int r = cont_reorder( cont, -1 );
+	if( r = -1 ){
+		Refholder_t* list = split_all(0);
+		find_areas( list );
+		clean_conts_by_list( &list );
+		find_all_conts();
+		if( debug ) exit(0);
+	}
+}
+
 void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, double height, int debug){
-	// Svg_env_t* env, 
+	// Svg_env_t* env,
 	double d = env_d("tool_d");
 	d = d/2;
 	int mirror_x = env_i("mirror_x");
@@ -193,11 +233,54 @@ Aperture* find_aperture(GerberState* state, int number){
     return NULL;
 }
 
+// Парсинг определения макроса
+void parse_macros_definition( const char* line, GerberState* state ){
+    char macroName[32];
+    int p1, p2, count, offset = 0;
+    // 1. Парсим имя до '*' и три числа после
+    // %[^*] — читать всё, пока не встретится '*'
+    if( sscanf(line, "%%AM%[^*]*%d,%d,%d,%n", macroName, &p1, &p2, &count, &offset) < 4) {
+        printf("Ошибка структуры строки\n");
+        exit(1);
+    }
+	const char *ptr = line + offset;
+	char* star = strchr(ptr, '*');
+	if( star ) *star = '\0';
+	if( count < 30 ){
+		Macro* mc = &state->macros[state->macros_count];
+		state->macros_count++;
+		mc->len = count;
+		memcpy(&mc->macro, &macroName, 10);
+		for( int i = 0; i < count; i++ ){
+			float x=0;
+			float y=0;
+			int bytes;
+			if( sscanf(ptr, "%f,%f,%n", &x, &y, &bytes) >= 2 ){
+//				printf("[%d]: x=%.4f, y=%.4f\n", i + 1, x, y);
+				mc->points[i].x = x;
+				mc->points[i].y = y;
+				ptr += bytes;
+			}
+		}
+		state->macros_count++;
+	}
+}
+
+Macro* macro_by_name(GerberState* state, char* macro){
+    for( int i=0; i<state->macros_count; i++ ){
+        if( strcmp(state->macros[i].macro, macro)==0 ){
+            return &state->macros[i];
+        };
+    }
+    return NULL;
+}
+
 // Парсинг определения апертуры
 void parse_aperture_definition( const char* line, GerberState* state ){
     char type;
     int num;
     char params[100];
+    char macroName[32];
     if( sscanf(line, "%%ADD%d%c,%s", &num, &type, params) >= 3 ){
         // Убираем * в конце если есть
         char* star = strchr(params, '*');
@@ -222,6 +305,13 @@ void parse_aperture_definition( const char* line, GerberState* state ){
             }
         }
         state->aperture_count++;
+    }else if( sscanf(line, "%%ADD%dM%[^*]", &num, &macroName, params) >= 2){
+        Aperture* ap = &state->apertures[state->aperture_count];
+        ap->number = num;
+        ap->type = 'M';
+        *ap->macro = 'M';
+        strcpy( ap->macro+1, macroName );
+        state->aperture_count++;
     }
 }
 
@@ -234,6 +324,8 @@ void select_aperture(GerberState* state, int number){
             message(0, "Selected circular aperture D%d (dia=%.4f)", number, ap->param1);
         }else if(ap->type == 'R') {
             message(0, "Selected rectangular aperture D%d (%.4fx%.4f)", number, ap->param1, ap->param2);
+        }else if(ap->type == 'M') {
+            message(0, "Selected poligon aperture D%d", number);
         }
     }else{
         message(0, "Selected unknown aperture D%d", number);
@@ -308,6 +400,8 @@ void parse_coordinate_command(const char* line, GerberState* state) {
             grb_line_milling( state->x, state->y, new_x, new_y, ap->param1, debug );
         }else if (ap->type == 'R') {
             grb_ra_line( state->x, state->y, new_x, new_y, ap->param1, ap->param2, debug );
+        }else if (ap->type == 'M') {
+            fprintf(stderr, "Error: Function not implemented: move polygon\n");
         }
         state->x = new_x;
         state->y = new_y;
@@ -320,6 +414,11 @@ void parse_coordinate_command(const char* line, GerberState* state) {
             grb_line_milling( new_x, new_y, new_x, new_y, ap->param1, debug );
         }else if (ap->type == 'R') {
             grb_ra_line( new_x, new_y, new_x, new_y, ap->param1, ap->param2, debug );
+        }else if (ap->type == 'M') {
+            Macro* m = macro_by_name(state, ap->macro);
+            //printf("M: %s\n", m->macro);
+            grb_macro_touch( new_x, new_y, m, debug );
+            //exit(1);
         }
         state->x = new_x;
         state->y = new_y;
@@ -378,6 +477,7 @@ void parse_gerber_file( const char* filename, Context_t* ctx ){
 		}
 		// Определения апертур
 		if( strstr(line, "%ADD") ) parse_aperture_definition(line, &state);
+		if( strstr(line, "%AM")  ) parse_macros_definition(line, &state);
 		// Выбор апертуры
 		if( line[0] == 'D' && isdigit(line[1]) && strchr(line, '*') && !strstr(line, "%ADD") && !strstr(line, "D0") ){
 			char num_str[10];
