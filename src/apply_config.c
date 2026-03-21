@@ -75,8 +75,8 @@ void set_int_param(struct pair ** config, char* name, int defval, char* conffile
 	}
 	if( strval && (strlen(strval))>0 ){
 		val = strtol(strval , &end, 10 );
-		if( val <= 0 ){
-			fprintf(stderr, "Config error in parameter %s\n", name);
+		if( val < 0 ){
+			fprintf(stderr, "Config error in parameter %s = %s\n", name, strval);
 			exit(1);
 		};
 		defined = 1;
