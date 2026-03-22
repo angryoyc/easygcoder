@@ -6,9 +6,9 @@ echo "Batch #${N}:"
 
 ## Milling Bottom Layer
 easygcoder \
-   -i ./gerber/${N}/Gerber_BottomLayer.GBL \
-   -d ./gerber/${N}/Drill_PTH_Through.DRL \
    -d ./gerber/${N}/Drill_NPTH_Through.DRL \
+   -d ./gerber/${N}/Drill_PTH_Through.DRL \
+   -i ./gerber/${N}/Gerber_BottomLayer.GBL \
    -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
    \
    -s ./gcode/${N}/BottomLayer.svg \
@@ -17,19 +17,36 @@ easygcoder \
 
 ## Drill all holes (bottom side)
 easygcoder \
-   -d ./gerber/${N}/Drill_PTH_Through.DRL \
    -d ./gerber/${N}/Drill_NPTH_Through.DRL \
+   -d ./gerber/${N}/Drill_PTH_Through.DRL \
    \
    -s ./gcode/${N}/BottomLayerDrill.svg \
    -b ./gcode/${N}/BottomLayerDrill.gcode \
+   -m y
+
+## Bottom Solder Mask
+easygcoder \
+   -i ./gerber/${N}/Gerber_BottomSolderMaskLayer.GBS \
+   -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
+   \
+   -s ./gcode/${N}/BottomLayerMask.svg \
+   -o ./gcode/${N}/BottomLayerMask.gcode \
+   -m y
+
+## Milling Outline (bottom side)
+easygcoder \
+   -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
+   \
+   -s ./gcode/${N}/BottomLayerOutline.svg \
+   -o ./gcode/${N}/BottomLayerOutline.gcode \
    -m y
 
 ## Milling Top Layer
 easygcoder \
    -i ./gerber/${N}/Gerber_TopLayer.GTL \
    -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
-   -d ./gerber/${N}/Drill_PTH_Through.DRL \
    -d ./gerber/${N}/Drill_NPTH_Through.DRL \
+   -d ./gerber/${N}/Drill_PTH_Through.DRL \
    \
    -s ./gcode/${N}/TopLayer.svg \
    -o ./gcode/${N}/TopLayer.gcode
@@ -44,10 +61,19 @@ easygcoder \
 
 ## Drill all holes (top side)
 easygcoder \
+   -d ./gerber/${N}/Drill_NPTH_Through.DRL \
    -d ./gerber/${N}/Drill_PTH_Through.DRL \
    \
    -s ./gcode/${N}/TopLayerDrill.svg \
    -b ./gcode/${N}/TopLayerDrill.gcode
+
+## Bottom Solder Mask
+easygcoder \
+   -i ./gerber/${N}/Gerber_TopSolderMaskLayer.GTS \
+   -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
+   \
+   -s ./gcode/${N}/TopLayerMask.svg \
+   -o ./gcode/${N}/TopLayerMask.gcode
 
 ## Milling Outline (top side)
 easygcoder \
@@ -55,4 +81,3 @@ easygcoder \
    \
    -s ./gcode/${N}/TopLayerOutline.svg \
    -o ./gcode/${N}/TopLayerOutline.gcode
-
