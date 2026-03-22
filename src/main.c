@@ -274,12 +274,14 @@ int main(int argc, char* argv[]) {
 	}
 
 	//-----< Gerber milling
-	if( (input_file != NULL) && isfile(input_file) ){
-		printf("Using input file: %s\n", input_file);
-		parse_gerber_file( input_file, ctx_main );
-	}else{
-		fprintf(stderr, "File not found: %s\n", input_file);
-		exit(1);
+	if( input_file != NULL ){
+		if( isfile(input_file) ){
+			printf("Using input file: %s\n", input_file);
+			parse_gerber_file( input_file, ctx_main );
+		}else{
+			fprintf(stderr, "File not found: %s\n", input_file);
+			exit(1);
+		}
 	}
 
 	//-----< Gerber Board Outline
