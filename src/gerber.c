@@ -437,7 +437,7 @@ void parse_coordinate_command(const char* line, GerberState* state) {
             grb_ra_line( new_x, new_y, new_x, new_y, ap->param1, ap->param2, debug );
         }else if (ap->type == 'M') {
             Macro* m = macro_by_name(state, ap->macro);
-            printf("M: %s %i\n\n", m->macro, m->len);
+            //printf("M: %s %i\n\n", m->macro, m->len);
             grb_macro_touch( new_x, new_y, m, debug );
             //exit(1);
         }
