@@ -11,6 +11,8 @@
 #include "../include/conf.h"
 #include "../include/reflist.h"
 #include "../include/context.h"
+#include "../include/point.h"
+#include "../include/line.h"
 #include "../include/cont.h"
 #include "../include/milling.h"
 #include "../include/mergcont.h"
@@ -117,8 +119,27 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 	find_all_conts();
 }
 
-Cont_t* poligon(double x, double y,  Macro* m, int mirror_x, int mirror_y){
-    return NULL;
+Cont_t* poligon( double _x, double _y, Macro* m, int mirror_x, int mirror_y ){
+	Point_t* prev = NULL;
+	Point_t* next = NULL;
+	Point_t* start = NULL;
+	Cont_t* cont = create_cont();
+	for( int i = 0; i < m->len; i++ ){
+		if( next ) prev = next;
+		double x = round_to_decimal(m->points[i].x, 2) * (mirror_y?-1:1);
+		double y = round_to_decimal(m->points[i].y, 2) * (mirror_x?-1:1);
+		next = create_p( _x + x, _y + y );
+		if( !start ) start = next;
+		if( prev && next ){
+			Line_t* l = create_line( prev, next );
+			add_item2cont( (Refitem_t*) l, cont );
+		}
+	}
+	if( next && start ){
+		Line_t* l = create_line( next, start );
+		add_item2cont( (Refitem_t*) l, cont );
+	}
+	return cont;
 };
 
 void grb_macro_touch(double _x1, double _y1, Macro* m, int debug){
@@ -416,7 +437,7 @@ void parse_coordinate_command(const char* line, GerberState* state) {
             grb_ra_line( new_x, new_y, new_x, new_y, ap->param1, ap->param2, debug );
         }else if (ap->type == 'M') {
             Macro* m = macro_by_name(state, ap->macro);
-            //printf("M: %s\n", m->macro);
+            printf("M: %s %i\n\n", m->macro, m->len);
             grb_macro_touch( new_x, new_y, m, debug );
             //exit(1);
         }
