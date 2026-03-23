@@ -11,6 +11,7 @@ Cont_t* ra_line( double x1, double y1, double x2, double y2, double W, double H,
 //void outline_milling(Cont_t* cont, double r);
 //Context_t* outline_milling(Cont_t* cont, double r);
 void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r);
+void punch_milling( double x, double y, double d, int dir, Cont_t** cont1 );
 
 
 

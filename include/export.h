@@ -23,3 +23,4 @@ void print_p( Point_t* );
 void print_item( Refitem_t* item );
 
 void boring_gcode( FILE* output_fd, Excellon_t* exc );
+void boring_gcode_x( FILE* output_fd, Excellon_t* exc );

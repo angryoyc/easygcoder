@@ -65,6 +65,18 @@ typedef struct {
 // Функции-заглушки для рисования
 static int count = 0;
 
+
+void grb_center_punching(double _x, double _y, int debug){
+	int mirror_x = env_i("mirror_x");
+	int mirror_y = env_i("mirror_y");
+	double x = round_to_decimal(_x, 2) * (mirror_y?-1:1);
+	double y = round_to_decimal(_y, 2) * (mirror_x?-1:1);
+	double d = env_d("tool_d");
+	Cont_t* cont = NULL;
+	punch_milling( x, y, round_to_decimal(d, 2), -1, &cont );
+}
+
+
 void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double diameter, int debug ){
 	// Svg_env_t* env,
 	//select_context("main");
@@ -99,7 +111,7 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 	double x2 = round_to_decimal(_x2, 2) * (mirror_y?-1:1);
 	double y2 = round_to_decimal(_y2, 2) * (mirror_x?-1:1);
 
-	if( count == 2 ) debug = 1;
+	//if( count == 2 ) debug = 1;
 
 	/*
 	if( debug ){
