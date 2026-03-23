@@ -256,6 +256,21 @@ int main(int argc, char* argv[]) {
 //	//-----< Gerber Layer Data
 	ctx_main = create_context("main");
 
+
+	//-----< Gerber milling
+	if( input_file != NULL ){
+		if( isfile(input_file) ){
+			printf("Using input file: %s\n", input_file);
+			parse_gerber_file( input_file, ctx_main );
+		}else{
+			fprintf(stderr, "File not found: %s\n", input_file);
+			exit(1);
+		}
+	}
+
+
+
+
 	//-----< Gerber Drill
 	if( drill_file_count > 0 ){ // Если указан файл сверловки, обрабатываем его
 		for( int i=0; i < drill_file_count; i++ ){
@@ -273,17 +288,6 @@ int main(int argc, char* argv[]) {
 		//print_holes(&exc);
 	}
 
-	//-----< Gerber milling
-	if( input_file != NULL ){
-		if( isfile(input_file) ){
-			printf("Using input file: %s\n", input_file);
-			parse_gerber_file( input_file, ctx_main );
-		}else{
-			fprintf(stderr, "File not found: %s\n", input_file);
-			exit(1);
-		}
-	}
-
 	//-----< Gerber Board Outline
 	if( (outline_file != NULL) && isfile(outline_file) ){ // Если указан файл обрезки платы, парсим его // && isfile(outline_file)
 		printf( "Using board outline file: %s\n", outline_file );
@@ -293,7 +297,6 @@ int main(int argc, char* argv[]) {
 		copy_ctx2ctx( ctx_outline->name, ctx_main->name, NULL );
 		//printf("Drill file processing would go here: %s\n", drill_file );
 	}
-
 
 	// ================= OUTPUT PHASE ===========
 	select_context("main");

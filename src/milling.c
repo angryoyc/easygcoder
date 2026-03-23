@@ -16,6 +16,24 @@
 
 #define MAX_VERTICES 6
 
+void punch_milling( double x, double y, double d, int dir, Cont_t** cont1 ){
+	*cont1 = NULL;
+	*cont1 = create_cont();
+    Point_t* p1 = create_p(x, y - d*0.8);
+    Point_t* p2 = create_p(x, y + d*0.8);
+    Point_t* p3 = create_p(x - d*0.8, y);
+    Point_t* p4 = create_p(x + d*0.8, y);
+    Line_t* l1 = create_line( p1, p2 );
+    Line_t* l2 = create_line( p2, p3 );
+    Line_t* l3 = create_line( p3, p4 );
+    Line_t* l4 = create_line( p4, p1 );
+	add_item2cont( (Refitem_t*) l1, *cont1);
+	add_item2cont( (Refitem_t*) l2, *cont1);
+	add_item2cont( (Refitem_t*) l3, *cont1);
+	add_item2cont( (Refitem_t*) l4, *cont1);
+	return;
+}
+
 void line_milling( double x1, double y1, double x2, double y2, double R, int dir, Cont_t** cont1 ){
 	double cx, cy, dx, dy, ex, ey, fx, fy;
 	double dist = distance( x1, y1, x2, y2 );
