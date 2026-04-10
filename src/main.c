@@ -129,7 +129,7 @@ int main(int argc, char* argv[]) {
 	// Парсинг аргументов командной строки
 	if( argc > 1 ){
 		for (int i = 1; i < argc; i++) {
-			if( strcmp(argv[i], "init") == 0 || strcmp(argv[i], "ini") ==0 ) {
+			if( strcmp(argv[i], "init") == 0 || strcmp(argv[i], "ini")==0 || strcmp(argv[i], "-ini")==0  || strcmp(argv[i], "-init")==0 ) {
 				if (mkdir("./gerber", 0755) == 0){
 					printf("create folder: ./gerber\n");
 				}

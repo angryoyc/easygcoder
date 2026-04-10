@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
+#include <locale.h>
 
 #include "../include/define.h"
 #include "../include/top.h"
@@ -14,6 +15,7 @@
 #include "../include/point.h"
 #include "../include/line.h"
 #include "../include/cont.h"
+#include "../include/geom.h"
 #include "../include/milling.h"
 #include "../include/mergcont.h"
 #include "../include/excellon.h"
@@ -26,6 +28,12 @@
 #define MAX_APERTURES 100
 #define MAX_MACROS 100
 
+// Структура для хранения координат
+typedef struct {
+	double x;
+	double y;
+} Coor;
+
 // Структура для хранения апертуры
 typedef struct {
     int number;
@@ -33,21 +41,25 @@ typedef struct {
     double param1; // диаметр или ширина
     double param2; // высота (для прямоугольника)
     char macro[10];
+	int points_len;
+	Coor points[30];
 } Aperture;
 
-// Структура для хранения координат
+
+// Структура для хранения входных параметров макроса
 typedef struct {
-	double x;
-	double y;
-} Coor;
+	int index;
+	double value;
+} Param;
 
 // Структура для хранения macros
 typedef struct {
 	char macro[10];
-	int  len;
-	Coor points[30];
+//	int  len;           // убрать после переноса
+//	Coor points[30];    // убрать после переноса
+	int  params_len;
+	Param params[30];
 } Macro;
-
 
 // Структура для хранения состояния парсера
 typedef struct {
@@ -131,15 +143,15 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 	find_all_conts();
 }
 
-Cont_t* poligon( double _x, double _y, Macro* m, int mirror_x, int mirror_y ){
+Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y ){
 	Point_t* prev = NULL;
 	Point_t* next = NULL;
 	Point_t* start = NULL;
 	Cont_t* cont = create_cont();
-	for( int i = 0; i < m->len; i++ ){
+	for( int i = 0; i < ap->points_len; i++ ){
 		if( next ) prev = next;
-		double x = round_to_decimal(m->points[i].x, 2) * (mirror_y?-1:1);
-		double y = round_to_decimal(m->points[i].y, 2) * (mirror_x?-1:1);
+		double x = round_to_decimal(ap->points[i].x, 2) * (mirror_y?-1:1);
+		double y = round_to_decimal(ap->points[i].y, 2) * (mirror_x?-1:1);
 		next = create_p( _x + x, _y + y );
 		if( !start ) start = next;
 		if( prev && next ){
@@ -154,14 +166,14 @@ Cont_t* poligon( double _x, double _y, Macro* m, int mirror_x, int mirror_y ){
 	return cont;
 };
 
-void grb_macro_touch(double _x1, double _y1, Macro* m, int debug){
+void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double d = env_d("tool_d");
 	d = d/2;
-	Cont_t* cont = poligon(x1, y1, m, mirror_x, mirror_y);
+	Cont_t* cont = poligon(x1, y1, ap, mirror_x, mirror_y);
 	int r = cont_reorder( cont, -1 );
 	if( r = -1 ){
 		Refholder_t* list = split_all(0);
@@ -205,18 +217,15 @@ void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, d
 	*/
 	int r = cont_reorder( cont, -1 );
 	if( r = -1 ){
-
 		Refholder_t* list = split_all(0);
 		find_areas( list );
 		clean_conts_by_list( &list );
 		find_all_conts();
-
 //		split_all(0);
 //		calc_contcount4all( 0, debug );
 //		marking_of_imposed(); // Маркируем совпадающие грани контуров
 //		clean_all_cont();
 //		find_all_conts();
-
 		if( debug ){
 			//walk_around_all_cont("svg", stdout);
 			exit(0);
@@ -268,35 +277,66 @@ Aperture* find_aperture(GerberState* state, int number){
 
 // Парсинг определения макроса
 void parse_macros_definition( const char* line, GerberState* state ){
-    char macroName[32];
-    int p1, p2, count, offset = 0;
-    // 1. Парсим имя до '*' и три числа после
-    // %[^*] — читать всё, пока не встретится '*'
-    if( sscanf(line, "%%AM%[^*]*%d,%d,%d,%n", macroName, &p1, &p2, &count, &offset) < 4) {
-        printf("Ошибка структуры строки\n");
-        exit(1);
-    }
-	const char *ptr = line + offset;
+    printf("parse_macros_definition\n");
+	char macroName[32];
+	int primCode, exposure, count, offset = 0;
+	// 1. Парсим имя до '*' и три числа после
+	// %[^*] — читать всё, пока не встретится '*'
+	if( sscanf(line, "%%AM%[^*]*%d,%n", macroName, &primCode, &offset) < 2 ){
+		printf("Ошибка структуры строки: %s\n", line);
+		exit(1);
+	}
+	const char* ptr = line + offset;
+	offset = 0;
 	char* star = strchr(ptr, '*');
 	if( star ) *star = '\0';
-	if( count < 30 ){
-		Macro* mc = &state->macros[state->macros_count];
-		state->macros_count++;
-		mc->len = count;
-		memcpy(&mc->macro, &macroName, 10);
-		for( int i = 0; i < count; i++ ){
-			float x=0;
-			float y=0;
-			int bytes;
-			if( sscanf(ptr, "%f,%f,%n", &x, &y, &bytes) >= 2 ){
-//				printf("[%d]: x=%.4f, y=%.4f\n", i + 1, x, y);
-				mc->points[i].x = x;
-				mc->points[i].y = y;
-				ptr += bytes;
+	Macro* mc = &state->macros[ state->macros_count ];
+	state->macros_count++;
+	mc->params[0].index = 0;
+	mc->params[0].value = primCode;
+	mc->params_len = 1;
+	memcpy(&mc->macro, &macroName, 10);
+	char par[32];
+	while (sscanf(ptr, "%31[^,*]%n", par, &offset) == 1) {
+		char *endptr;
+		double val = strtod(par, &endptr);
+		if(par == endptr) {
+			// В строке вообще не было числа (например, там "$1")
+			if (par[0] == '$') {
+				int var_index = atoi(par + 1); // Обрабатываем как переменную
+				mc->params[mc->params_len].index = var_index;
+				mc->params[mc->params_len].value = 0;
+				//printf("int=%i\n", var_index );
+				mc->params_len++;
 			}
+		} else {
+			// Число успешно прочитано
+			mc->params[mc->params_len].index = 0;
+			mc->params[mc->params_len].value = val;
+			//printf(" %i --- float=%f\n", mc->params_len, val );
+			mc->params_len++;
 		}
-		state->macros_count++;
+		ptr += offset; // Сдвигаем указатель на длину прочитанного текста
+		if (*ptr == ',') {
+			ptr++; // Пропускаем запятую и идем на следующий круг
+		} else if (*ptr == '*') {
+			break; // Дошли до финальной звезды — выход
+		} else {
+			break; // Что-то пошло не так
+		}
 	}
+/*
+	for( int i = 0; i < mc->params_len; i++ ){
+		printf("%i  =  ", i);
+		if( mc->params[i].index == 0 ){       //абсолютное значение
+			printf( " %f ", mc->params[i].value );
+		}else{                                // параметрическое значение
+			printf( " S%i ", mc->params[i].index );
+		}
+		printf("\n");
+	}
+	exit(1);
+*/
 }
 
 Macro* macro_by_name(GerberState* state, char* macro){
@@ -308,45 +348,111 @@ Macro* macro_by_name(GerberState* state, char* macro){
     return NULL;
 }
 
+double get_par( Macro* mc, double arg[], int i){
+	double v = 0;
+	if( mc->params[i].index ){
+		v = arg[mc->params[i].index];
+	}else{
+		v = mc->params[i].value;
+	};
+	return v;
+}
+
+
 // Парсинг определения апертуры
 void parse_aperture_definition( const char* line, GerberState* state ){
-    char type;
-    int num;
-    char params[100];
-    char macroName[32];
-    if( sscanf(line, "%%ADD%d%c,%s", &num, &type, params) >= 3 ){
-        // Убираем * в конце если есть
-        char* star = strchr(params, '*');
-        if( star ) *star = '\0';
-        if( state->aperture_count >= MAX_APERTURES ){
-            printf("Too many apertures!");
-            return;
-        }
-        Aperture* ap = &state->apertures[state->aperture_count];
-        ap->number = num;
-        ap->type = type;
-        if (type == 'C') {
-            ap->param1 = atof(params);
-            message(0, "Defined circular aperture D%d: dia=%.4f", num, ap->param1);
-        }else if (type == 'R') {
-            char* x = strchr(params, 'X');
-            if(x){
-                *x = '\0';
-                ap->param1 = atof(params);
-                ap->param2 = atof(x + 1);
-                message(0, "Defined rectangular aperture D%d: %.4fx%.4f", num, ap->param1, ap->param2);
-            }
-        }
-        state->aperture_count++;
-    }else if( sscanf(line, "%%ADD%dM%[^*]", &num, &macroName, params) >= 2){
-        Aperture* ap = &state->apertures[state->aperture_count];
-        ap->number = num;
-        ap->type = 'M';
-        *ap->macro = 'M';
-        strcpy( ap->macro+1, macroName );
-        state->aperture_count++;
-    }
+	printf("parse_aperture_definition\n");
+	char type;
+	int num;
+	char params[100];
+	char macroName[32];
+	int bytes = 0;
+	if( sscanf(line, "%%ADD%d%c,%s", &num, &type, params) >= 3 ){
+		// Убираем * в конце если есть
+		char* star = strchr(params, '*');
+		if( star ) *star = '\0';
+		if( state->aperture_count >= MAX_APERTURES ){
+			printf("Too many apertures!");
+			return;
+		}
+		Aperture* ap = &state->apertures[state->aperture_count];
+		ap->number = num;
+		ap->type = type;
+		if (type == 'C') {
+			ap->param1 = atof(params);
+			message(0, "Defined circular aperture D%d: dia=%.4f", num, ap->param1);
+		}else if (type == 'R') {
+			char* x = strchr(params, 'X');
+			if(x){
+				*x = '\0';
+				ap->param1 = atof(params);
+				ap->param2 = atof(x + 1);
+				message(0, "Defined rectangular aperture D%d: %.4fx%.4f", num, ap->param1, ap->param2);
+			}
+		}
+		state->aperture_count++;
+	}else if( sscanf(line, "%%ADD%dM%[^*,]%n", &num, &macroName, &bytes) >= 2){
+		Aperture* ap = &state->apertures[state->aperture_count];
+		ap->number = num;
+		ap->type = 'M';
+		*ap->macro = 'M';
+		strcpy( ap->macro+1, macroName );
+		state->aperture_count++;
+		printf("parse_aperture_definition with macro %s\n", ap->macro);
+		Macro* mc = macro_by_name(state, ap->macro );
+		if( mc ){
+			int code = (int) mc->params[0].value;
+			if( code == 4 ){ //просто полигон по точкам
+				int expl = (int) mc->params[1].value;
+				int count = (int) mc->params[2].value;
+				for( int i = 0; i < count; i++ ){
+					ap->points[i].x = mc->params[3+i*2].value;
+					ap->points[i].y = mc->params[3+i*2+1].value;
+				}
+				ap->points_len = count;
+			}else if(code==21){
+				ap->points_len = 4;
+				char* ptr = (char*) line + bytes;
+				double arg[30];
+				int n = sscanf(ptr, ",%lfX%lfX%lf*", &arg[1], &arg[2], &arg[3]);
+				if( n >= 3 ){
+					double exp = get_par( mc, arg, 1 );
+					double w = get_par( mc, arg, 2 );
+					double h = get_par( mc, arg, 3 );
+					double cx = get_par( mc, arg, 4 );
+					double cy = get_par( mc, arg, 5 );
+					double ang = get_par( mc, arg, 6 );
+					//printf("exp=%f, w=%f, h=%f, cx=%f, cy=%f, ang=%f\n", exp, w, h, cx, cy, ang);
+					//exit(1);
+					double x,y;
+					x = cx + w/2;
+					y = cy + h/2;
+					rotate_point(x, y, ang, &ap->points[0].x, &ap->points[0].y);
+
+					x = cx + w/2;
+					y = cy - h/2;
+					rotate_point(x, y, ang, &ap->points[1].x, &ap->points[1].y);
+
+					x = cx - w/2;
+					y = cy - h/2;
+					rotate_point(x, y, ang, &ap->points[2].x, &ap->points[2].y);
+
+					x = cx - w/2;
+					y = cy + h/2;
+					rotate_point(x, y, ang, &ap->points[3].x, &ap->points[3].y);
+				//}else{
+				//	printf(" n = %i $1 = %f \n\n\n", n, arg[1] );
+				}
+				//exit(1);
+				
+			}
+		}else{
+			printf("Macro %s not found\n", macroName);
+		}
+	}
+	printf("end of parse_aperture_definition\n");
 }
+
 
 // Выбор апертуры
 void select_aperture(GerberState* state, int number){
@@ -450,7 +556,7 @@ void parse_coordinate_command(const char* line, GerberState* state) {
         }else if (ap->type == 'M') {
             Macro* m = macro_by_name(state, ap->macro);
             //printf("M: %s %i\n\n", m->macro, m->len);
-            grb_macro_touch( new_x, new_y, m, debug );
+            grb_macro_touch( new_x, new_y, ap, debug );
             //exit(1);
         }
         state->x = new_x;
@@ -460,6 +566,7 @@ void parse_coordinate_command(const char* line, GerberState* state) {
 
 // Основная функция парсинга
 void parse_gerber_file( const char* filename, Context_t* ctx ){
+	setlocale(LC_NUMERIC, "C");
 	if( !ctx ){
 		fprintf(stderr, "Empty context. Skip input file %s\n", filename);
 		return;
