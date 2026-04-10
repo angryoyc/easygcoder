@@ -17,6 +17,15 @@
 
 const double epsilon = 0.00001f; // единное место определения
 
+
+void rotate_point(double x, double y, double degrees, double *x_new, double *y_new){
+    double radians = degrees * (M_PI / 180.0);
+    double cos_theta = cos(radians);
+    double sin_theta = sin(radians);
+    *x_new = x * cos_theta - y * sin_theta;
+    *y_new = x * sin_theta + y * cos_theta;
+}
+
 double round_to_decimal(double value, int decimals) {
     double factor = pow(10, decimals);
     return round(value * factor) / factor;

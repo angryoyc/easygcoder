@@ -8,6 +8,9 @@ extern const double epsilon;
 double points_distance(Point_t* a, Point_t* b);
 double distance( double ax, double ay, double bx, double by );
 double normalize_angle(double angle);
+
+void rotate_point(double x, double y, double degrees, double *x_new, double *y_new);
+
 Point_t* create_p_of_line_mid(Point_t* a, Point_t* b);
 void middle( double ax, double ay, double bx, double by, double* px, double* py );
 uint8_t is_point_on_circle(double center_x, double center_y, double radius, double x, double y);

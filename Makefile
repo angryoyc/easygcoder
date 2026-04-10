@@ -109,12 +109,12 @@ checkworkdir:
 
 .PHONY: pull
 pull: clean
-	git pull origin master
+	git pull origin gerber21
 
 .PHONY: push
 push: clean
 	git commit -a
-	git push origin master
+	git push origin gerber21
 
 .PHONY: install
 install: preinstall
