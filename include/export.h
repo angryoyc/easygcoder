@@ -5,7 +5,7 @@ void walk_around_cont_points( Point_t* p );
 
 //void walk_around_all_cont(const char* mod, int M, FILE* output_fd );
 //void walk_around_all_cont(const char* mod, Svg_env_t* env, FILE* output_fd );
-void walk_around_all_cont( const char* mod, FILE* output_fd );
+int walk_around_all_cont( const char* mod, FILE* output_fd );
 
 void walk_around_all_points();
 void walk_around_all_prims();

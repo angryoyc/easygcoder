@@ -416,35 +416,18 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 				double arg[30];
 				int n = sscanf(ptr, ",%lfX%lfX%lf*", &arg[1], &arg[2], &arg[3]);
 				if( n >= 3 ){
+					double d = env_d("tool_d");
 					double exp = get_par( mc, arg, 1 );
 					double w = get_par( mc, arg, 2 );
 					double h = get_par( mc, arg, 3 );
 					double cx = get_par( mc, arg, 4 );
 					double cy = get_par( mc, arg, 5 );
 					double ang = get_par( mc, arg, 6 );
-					//printf("exp=%f, w=%f, h=%f, cx=%f, cy=%f, ang=%f\n", exp, w, h, cx, cy, ang);
-					//exit(1);
-					double x,y;
-					x = cx + w/2;
-					y = cy + h/2;
-					rotate_point(x, y, ang, &ap->points[0].x, &ap->points[0].y);
-
-					x = cx + w/2;
-					y = cy - h/2;
-					rotate_point(x, y, ang, &ap->points[1].x, &ap->points[1].y);
-
-					x = cx - w/2;
-					y = cy - h/2;
-					rotate_point(x, y, ang, &ap->points[2].x, &ap->points[2].y);
-
-					x = cx - w/2;
-					y = cy + h/2;
-					rotate_point(x, y, ang, &ap->points[3].x, &ap->points[3].y);
-				//}else{
-				//	printf(" n = %i $1 = %f \n\n\n", n, arg[1] );
+					rotate_point(cx + (w+d)/2, cy + (h+d)/2, ang, &ap->points[0].x, &ap->points[0].y);
+					rotate_point(cx + (w+d)/2, cy - (h+d)/2, ang, &ap->points[1].x, &ap->points[1].y);
+					rotate_point(cx - (w+d)/2, cy - (h+d)/2, ang, &ap->points[2].x, &ap->points[2].y);
+					rotate_point(cx - (w+d)/2, cy + (h+d)/2, ang, &ap->points[3].x, &ap->points[3].y);
 				}
-				//exit(1);
-				
 			}
 		}else{
 			printf("Macro %s not found\n", macroName);
