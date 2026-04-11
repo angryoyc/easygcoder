@@ -7,6 +7,7 @@ git commit -m "Реализация функционала из ветки worki
 git push origin master
 git push origin working --force-with-lease
 #git push origin working --force
+git checkout working
 ```
 Эта команда будет мгновенно приводить текущую ветку к состоянию сервера:
 ```
