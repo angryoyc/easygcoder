@@ -1,7 +1,7 @@
 ## Когда решил, что пора выгружать изменения в мастер-ветку:
 
 ```
-git checkout main
+git checkout master
 git merge --squash working
 git commit -m "Реализация функционала из ветки working: краткое описание изменений"
 git push origin master
