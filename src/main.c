@@ -239,12 +239,10 @@ int main(int argc, char* argv[]) {
 			//}
 		}
 	}
-
 	// Парсинг основного файла Gerber
 	Context_t* ctx_main;
 	Context_t* ctx_outline;
 	Context_t* ctx_drill;
-
 	if(print_params){
 		print_env();
 		if( !test_env("all") ) exit(1);
@@ -256,7 +254,6 @@ int main(int argc, char* argv[]) {
 //	//-----< Gerber Layer Data
 	ctx_main = create_context("main");
 
-
 	//-----< Gerber milling
 	if( input_file != NULL ){
 		if( isfile(input_file) ){
@@ -267,9 +264,6 @@ int main(int argc, char* argv[]) {
 			exit(1);
 		}
 	}
-
-
-
 
 	//-----< Gerber Drill
 	if( drill_file_count > 0 ){ // Если указан файл сверловки, обрабатываем его
@@ -317,8 +311,9 @@ int main(int argc, char* argv[]) {
 			}
 			printf("Writing output to file: %s\n", output_gcode );
 		}
-		walk_around_all_cont("gcode", output_stream );
-		if (output_stream != stdout) fclose(output_stream);
+		int ret = walk_around_all_cont("gcode", output_stream );
+		if( ret ) printf("File %s creation was BROKEN!!!\n", output_gcode);
+		if( output_stream != stdout ) fclose(output_stream);
 	}
 
 	//-----> SVG
@@ -335,8 +330,9 @@ int main(int argc, char* argv[]) {
 			}
 			printf("Writing output to file: %s\n", output_svg );
 		}
-		walk_around_all_cont("svg", output_stream);
-		if (output_stream != stdout) fclose(output_stream);
+		int ret = walk_around_all_cont("svg", output_stream);
+		if( ret ) printf("File %s creation was BROKEN!!!\n", output_gcode);
+		if( output_stream != stdout ) fclose(output_stream);
 	}
 
 	//-----> BORING

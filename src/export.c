@@ -45,7 +45,7 @@ void walk_around_cont( Cont_t* cont, const char* mod, Svg_context_t* env, FILE* 
 
 // Обход всех контуров в к контексте и вывод его состава в stdout
 // Svg_context_t* env,
-void walk_around_all_cont( const char* mod, FILE* output_fd ){
+int walk_around_all_cont( const char* mod, FILE* output_fd ){
 	Svg_context_t svg = {
 		.W =env_i("svg_width"),
 		.H =env_i("svg_height"),
@@ -97,8 +97,24 @@ void walk_around_all_cont( const char* mod, FILE* output_fd ){
 			start = env_d("milling_start");
 			deep = env_d("milling_deep");
 			step = env_d("milling_step");
+			if(
+				( deep > start ) && (step <= 0) ||
+				( deep < start ) && (step >= 0)
+			){
+				fprintf(stderr, "milling parameter erorr. Unconsisten values of milling_start, milling_deep or milling_step\n");
+				return 1;
+			}
+			if( deep > start ){ // двигаемся вверх
+				if( (start + step) > deep ){
+					step = deep - start;
+				}
+			}else if( deep < start ){ // двигаемся вниз
+				if( (start + step) < deep ){
+					step = deep - start;
+				}
+			}
 		}
-		//printf("\n\nmod = %s | start=%f; deep=%f; step=%f;\n\n", mod, start, deep, step);
+		printf("\n\nmod = %s | start=%f; deep=%f; step=%f;\n\n", mod, start, deep, step);
 		while((start+step)>=deep){
 			if( strcmp( mod, "gcode") == 0 ) milling_start(start);
 			for( int i=0; i < ctx->links.count; i++ ){
@@ -117,6 +133,7 @@ void walk_around_all_cont( const char* mod, FILE* output_fd ){
 	if( strcmp( mod, "gcode") == 0 ){
 		gcode_make_footer(output_fd);
 	}
+	return 0;
 }
 
 // Обход всех точек в к контексте и вывод связанных с ними объектами

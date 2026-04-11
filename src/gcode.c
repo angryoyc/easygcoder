@@ -65,9 +65,7 @@ void gcode_ini(){
     gcd.current_y      = 0.0;
     gcd.tool_down      = 0;
     gcd.position_valid = 0;
-
     gcd.tool_ch_height = env_d("tool_ch_height");
-
     gcd.milling_safe   = env_d("milling_safe");
     gcd.milling_start  = env_d("milling_start");
     gcd.milling_deep   = env_d("milling_deep");
@@ -78,9 +76,8 @@ void gcode_ini(){
     gcd.drill_deep     = env_d("drill_deep");
     gcd.drill_step     = env_d("drill_step");
     gcd.drill_feed     = env_i("drill_feed");
-
-    gcd.spindel_mode     = env_i("spindel_mode");
-    gcd.spindel_rpm   = env_i("spindel_rpm");
+    gcd.spindel_mode   = env_i("spindel_mode");
+    gcd.spindel_rpm    = env_i("spindel_rpm");
 }
 
 
