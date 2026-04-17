@@ -79,7 +79,7 @@ int walk_around_all_cont( const char* mod, FILE* output_fd ){
 	}
 
 	if( strcmp( mod, "svg") == 0 ){
-		fprintf(output_fd, "<svg width=\"%i\" height=\"%i\" xmlns=\"http://www.w3.org/2000/svg\">\n", svg.W, svg.H );
+		fprintf(output_fd, "<svg width=\"%imm\" height=\"%imm\" viewBox=\"0 0 %i %i\" xmlns=\"http://www.w3.org/2000/svg\">\n", svg.W/svg.M, svg.H/svg.M, svg.W, svg.H );
 		fprintf(output_fd, "<path d=\"M %i %i L %i %i \" stroke=\"black\" stroke-width=\"1\" fill=\"none\" />\n", svg.cx-svg.dw, 0, svg.cx - svg.dw, svg.H );
 		fprintf(output_fd, "<path d=\"M %i %i L %i %i \" stroke=\"black\" stroke-width=\"1\" fill=\"none\" />\n", 0, svg.cy + svg.dh, svg.W, svg.cy + svg.dh );
 		fprintf(output_fd, "<path d=\"M %i %i L %i %i L %i %i L %i %i L %i %i\" stroke=\"black\" stroke-width=\"3\" fill=\"none\" />\n", 0, 0, 0, svg.H, svg.W, svg.H, svg.W, 0, 0, 0 );
@@ -114,7 +114,7 @@ int walk_around_all_cont( const char* mod, FILE* output_fd ){
 				}
 			}
 		}
-		printf("\n\nmod = %s | start=%f; deep=%f; step=%f;\n\n", mod, start, deep, step);
+		//printf("\n\nmod = %s | start=%f; deep=%f; step=%f;\n\n", mod, start, deep, step);
 		while((start+step)>=deep){
 			if( strcmp( mod, "gcode") == 0 ) milling_start(start);
 			for( int i=0; i < ctx->links.count; i++ ){
