@@ -67,7 +67,7 @@ easygcoder \
    -s ./gcode/${N}/TopLayerDrill.svg \
    -b ./gcode/${N}/TopLayerDrill.gcode
 
-## Bottom Solder Mask
+## Top Solder Mask
 easygcoder \
    -i ./gerber/${N}/Gerber_TopSolderMaskLayer.GTS \
    -f ./gerber/${N}/Gerber_BoardOutlineLayer.GKO \
