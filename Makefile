@@ -2,7 +2,7 @@ include .env
 export
 
 ifndef VERSION
-  VERSION = 0.1.0
+  VERSION = 0.0.1
 endif
 
 ifndef BUILDDIR
@@ -117,7 +117,7 @@ push: clean
 	git push origin working
 
 .PHONY: release
-pull: clean
+release: clean
 	git checkout master
 	git merge --squash working
 	git commit -a
