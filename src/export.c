@@ -114,7 +114,6 @@ int walk_around_all_cont( const char* mod, FILE* output_fd ){
 				}
 			}
 		}
-		//printf("\n\nmod = %s | start=%f; deep=%f; step=%f;\n\n", mod, start, deep, step);
 		while((start+step)>=deep){
 			if( strcmp( mod, "gcode") == 0 ) milling_start(start);
 			for( int i=0; i < ctx->links.count; i++ ){
@@ -204,7 +203,6 @@ void walk_around_cont( Cont_t* cont, const char* mod, Svg_context_t* svg, FILE* 
 		if( strcmp( mod, "gcode") == 0 ){
 			gcode_drop_position();
 			fprintf(output_fd, ";== start new cont\n");
-			//gcode_internal_ensure_tool_up(output_fd);
 			if( cont->links.arr ){
 				for( int i=0; i < cont->links.count; i++ ){
 					if( is_seg( cont->links.arr[i] ) ){
@@ -246,18 +244,13 @@ void walk_around_cont( Cont_t* cont, const char* mod, Svg_context_t* svg, FILE* 
 					if( item ){
 						if(item->type == OBJ_TYPE_LINE){
 							Line_t* l = (Line_t*) item;
-							//fprintf(output_fd, "<path id=\"line%i\" d=\"M %f %f L %f %f\" stroke=\"red\" stroke-width=\"1\" fill=\"none\" title=\"%i\"/>\n", l->id, M*l->a->x + cx, cy - M*l->a->y, M*l->b->x + cx, cy - M*l->b->y, l->contcount );
 							fprintf(output_fd, "<path id=\"line%i\" d=\"M %f %f L %f %f\" stroke=\"%s\" stroke-width=\"1\" fill=\"none\" title=\"%i\" inshadow=\"%i\"/>\n", l->id, svg_x(l->a->x, svg) , svg_y(l->a->y, svg), svg_x(l->b->x, svg), svg_y(l->b->y, svg), (cont->dir==1)?"green":"red", l->contcount, l->inshadow );
 						}else if(item->type == OBJ_TYPE_ARC){
 							Arc_t* arc = (Arc_t*) item;
 							if( (arc->dir == 0) || (arc->a == arc->b) || (p_eq_p(arc->a, arc->b)) ){
-								//fprintf(output_fd,  "<circle id=\"circle%i\" cx=\"%f\" cy=\"%f\" r=\"%f\" stroke=\"red\" stroke-width=\"1\" fill=\"none\"  title=\"%i\" />\n", arc->id, M*arc->center.x + cx, cy - M*arc->center.y, M*arc->R, arc->contcount );
 								fprintf(output_fd, "<circle id=\"circle%i\" cx=\"%f\" cy=\"%f\" r=\"%f\" stroke=\"%s\" stroke-width=\"1\" fill=\"none\"  title=\"%i\" />\n", arc->id, svg_x(arc->center.x, svg), svg_y(arc->center.y, svg), svg->M*arc->R, (cont->dir==1)?"green":"red", arc->contcount );
 							}else{
-								//fprintf(output_fd,  "<path id=\"arc%i\" d=\"M %f %f A %f %f 0 %i %i %f %f\" stroke=\"red\" stroke-width=\"1\" fill=\"none\" title=\"%i\"/>\n", arc->id, M*arc->a->x + cx, cy - M*arc->a->y, M*arc->R, M*arc->R, ((get_svg_arc_flags(arc)&2)==2)?1:0, (arc->dir==-1)?1:0, M*arc->b->x + cx, cy - M*arc->b->y, arc->contcount);
 								fprintf(output_fd, "<path id=\"arc%i\" d=\"M %f %f A %f %f 0 %i %i %f %f\" stroke=\"%s\" stroke-width=\"1\" fill=\"none\" title=\"%i\" inshadow=\"%i\"/>\n", arc->id, svg_x(arc->a->x, svg), svg_y(arc->a->y, svg), svg->M*arc->R, svg->M*arc->R, ((get_svg_arc_flags(arc)&2)==2)?1:0, (arc->dir==-1)?1:0, svg_x(arc->b->x, svg), svg_y(arc->b->y, svg), (cont->dir==1)?"green":"red",  arc->contcount, arc->inshadow);
-								//svg_point(arc->a->x, arc->a->x, M, output_fd);
-								//svg_point(arc->b->x, arc->b->x, M, output_fd);
 							}
 						}
 					}
@@ -358,12 +351,6 @@ void walk_around_cont_points( Point_t* p ){
 		}
 	}
 }
-
-/*
-void print_vector( Vector_t* v){
-	printf("dx, dy - (%f, %f) (k=%f) ", v->dx, v->dy, v->k );
-}
-*/
 
 void print_item( Refitem_t* item ){
 	if( is_line(item) ){
