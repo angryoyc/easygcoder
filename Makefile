@@ -76,6 +76,7 @@ configure: clean
 	$(shell echo "#define WORKDIR \"${WORKDIR}\"" > ./include/define.h)
 	$(shell echo "#define VERSION \"${VERSION}\"" >> ./include/define.h)
 	$(shell echo "#define TOOL_D ${TOOL_D}" >> ./include/define.h)
+	$(shell echo "#define TOOL_INSIDE ${TOOL_INSIDE}" >> ./include/define.h)
 	$(shell echo "#define TOOL_CH_HEIGHT ${TOOL_CH_HEIGHT}" >> ./include/define.h)
 	$(shell echo "#define SVG_M ${SVG_M}" >> ./include/define.h)
 	$(shell echo "#define SVG_WIDTH ${SVG_WIDTH}" >> ./include/define.h)

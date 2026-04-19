@@ -7,6 +7,7 @@ SVG_M = 10                            # Scale
 USR = serg
 
 TOOL_D = 0.2                          # Tool diameter for milling operations
+TOOL_INSIDE = 1                       # If it's equal to 1, this means that the tool will retreat by the tool radius inside the contour. Otherwise, it will retreat outward.
 TOOL_CH_HEIGHT = 100                  # Tool change height
 
 SVG_WIDTH = 1920                      # SVG work field width

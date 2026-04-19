@@ -1,6 +1,7 @@
 #define WORKDIR "/etc/easygcoder"
-#define VERSION "0.1.10"
+#define VERSION "0.1.11"
 #define TOOL_D 0.2
+#define TOOL_INSIDE 1
 #define TOOL_CH_HEIGHT 70
 #define SVG_M 10
 #define SVG_WIDTH 1920

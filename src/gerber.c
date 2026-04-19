@@ -90,40 +90,18 @@ void grb_center_punching(double _x, double _y, int debug){
 
 
 void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double diameter, int debug ){
-	// Svg_env_t* env,
-	//select_context("main");
-	//int debug = 0;
 	double d = env_d("tool_d");
-	d = diameter/2 + d/2;
+	int tinside  = env_i("tool_inside");
+	d = diameter/2 + (tinside?-d/2:d/2);
 	Cont_t* cont = NULL;
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
-
-	/*
-	if( cont && cont->links.arr && (cont->links.count>1) ){
-		count = count + 1;
-		//if( cont->links.count > 0 ){
-			for(int i = 0; i < cont->links.count; i++){
-				Refitem_t* item = cont->links.arr[i];
-				if( item->type == OBJ_TYPE_LINE ){
-					Line_t* a1 = (Line_t*) item;
-					//printf("Nespheratum finding %i...\n", a1->id);
-					if( a1->id == 1886 ){
-						printf("Nespheratum founded!!!\n");
-						debug = 1;
-					}
-				}
-			}
-		//}
-	}
-	*/
 
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double x2 = round_to_decimal(_x2, 2) * (mirror_y?-1:1);
 	double y2 = round_to_decimal(_y2, 2) * (mirror_x?-1:1);
 
-	//if( count == 2 ) debug = 1;
 
 	/*
 	if( debug ){
@@ -187,7 +165,8 @@ void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
 void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, double height, int debug){
 	// Svg_env_t* env,
 	double d = env_d("tool_d");
-	d = d/2;
+	int tinside = env_i("tool_inside");
+	d = tinside?(-d/2):(d/2);
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
 
@@ -195,8 +174,9 @@ void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, d
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double x2 = round_to_decimal(_x2, 2) * (mirror_y?-1:1);
 	double y2 = round_to_decimal(_y2, 2) * (mirror_x?-1:1);
+
 	Cont_t* cont = ra_line( x1, y1, x2, y2, round_to_decimal(width + d, 2), round_to_decimal(height + d, 2), -1 );
-	
+
 	//int debug = 0;
 	/*
 	Все оттестировано, но наш бронепоезд.... ну вы знаете.
@@ -221,13 +201,7 @@ void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, d
 		find_areas( list );
 		clean_conts_by_list( &list );
 		find_all_conts();
-//		split_all(0);
-//		calc_contcount4all( 0, debug );
-//		marking_of_imposed(); // Маркируем совпадающие грани контуров
-//		clean_all_cont();
-//		find_all_conts();
 		if( debug ){
-			//walk_around_all_cont("svg", stdout);
 			exit(0);
 		}
 	}
@@ -361,7 +335,7 @@ double get_par( Macro* mc, double arg[], int i){
 
 // Парсинг определения апертуры
 void parse_aperture_definition( const char* line, GerberState* state ){
-	printf("parse_aperture_definition\n");
+	//printf("parse_aperture_definition\n");
 	char type;
 	int num;
 	char params[100];
@@ -398,7 +372,7 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 		*ap->macro = 'M';
 		strcpy( ap->macro+1, macroName );
 		state->aperture_count++;
-		printf("parse_aperture_definition with macro %s\n", ap->macro);
+		//printf("parse_aperture_definition with macro %s\n", ap->macro);
 		Macro* mc = macro_by_name(state, ap->macro );
 		if( mc ){
 			int code = (int) mc->params[0].value;
@@ -433,7 +407,7 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 			printf("Macro %s not found\n", macroName);
 		}
 	}
-	printf("end of parse_aperture_definition\n");
+	//printf("end of parse_aperture_definition\n");
 }
 
 
