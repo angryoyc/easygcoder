@@ -188,8 +188,10 @@ void parse_drill_coordinate( Excellon_t* exc, const char* line, DrillState* stat
 		double final_y = state->last_y * state->scale;
 		if (state->current_tool_num != -1) {
 			message(0, "Drill Hole: X%.3f Y%.3f (T%02d)", final_x, final_y, state->current_tool_num);
-			grb_line_milling(final_x, final_y, final_x, final_y, env_d("tool_d"), 0); // Рисуем кернинг
-			grb_center_punching(final_x, final_y, 0);
+			double d = env_d("tool_d");
+			if( d <=0 ) d = 0.01;
+			grb_line_milling(final_x, final_y, final_x, final_y, d, 0); // Рисуем кернинг
+			//grb_center_punching(final_x, final_y, 0);
 			Hole_t h = { .x=final_x, .y=final_y, .d=state->current_tool.size_mm };
 			add_hole(exc, final_x, final_y, state->current_tool.size_mm);             // Добавляем отверстие на карту сверловки
 		}

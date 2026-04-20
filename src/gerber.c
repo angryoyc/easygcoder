@@ -90,9 +90,6 @@ void grb_center_punching(double _x, double _y, int debug){
 
 
 void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double diameter, int debug ){
-	double d = env_d("tool_d");
-	int tinside  = env_i("tool_inside");
-	d = diameter/2 + (tinside?-d/2:d/2);
 	Cont_t* cont = NULL;
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
@@ -113,8 +110,8 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 		find_all_conts();
 	}
 	*/
-
-	line_milling( x1, y1, x2, y2, round_to_decimal(d, 2), -1, &cont );
+	double R = diameter/2;
+	line_milling( x1, y1, x2, y2, round_to_decimal(R, 2), -1, &cont );
 	Refholder_t* list = split_all(0);
 	find_areas( list );
 	clean_conts_by_list( &list );
@@ -164,18 +161,13 @@ void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
 
 void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, double height, int debug){
 	// Svg_env_t* env,
-	double d = env_d("tool_d");
-	int tinside = env_i("tool_inside");
-	d = tinside?(-d/2):(d/2);
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
-
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double x2 = round_to_decimal(_x2, 2) * (mirror_y?-1:1);
 	double y2 = round_to_decimal(_y2, 2) * (mirror_x?-1:1);
-
-	Cont_t* cont = ra_line( x1, y1, x2, y2, round_to_decimal(width + d, 2), round_to_decimal(height + d, 2), -1 );
+	Cont_t* cont = ra_line( x1, y1, x2, y2, round_to_decimal(width, 2), round_to_decimal(height, 2), -1 );
 
 	//int debug = 0;
 	/*
@@ -251,7 +243,7 @@ Aperture* find_aperture(GerberState* state, int number){
 
 // Парсинг определения макроса
 void parse_macros_definition( const char* line, GerberState* state ){
-    printf("parse_macros_definition\n");
+    //printf("parse_macros_definition\n");
 	char macroName[32];
 	int primCode, exposure, count, offset = 0;
 	// 1. Парсим имя до '*' и три числа после
@@ -492,10 +484,15 @@ void parse_coordinate_command(const char* line, GerberState* state) {
     }
     // Выполняем команду
     if (d_code == 1) {  // D01 - фрезеровать по линии
+        double tool_d = env_d("tool_d");
+        int tinside  = env_i("tool_inside");
+        double offset = ( tinside?(-tool_d):(tool_d) );
+        printf("OFFSET: %f\n", offset);
         if (ap->type == 'C') {
-            grb_line_milling( state->x, state->y, new_x, new_y, ap->param1, debug );
+            printf("ap->param1: %f; SIZE: %f\n",ap->param1,  ap->param1 + offset);
+            grb_line_milling( state->x, state->y, new_x, new_y, ap->param1 + offset, debug );
         }else if (ap->type == 'R') {
-            grb_ra_line( state->x, state->y, new_x, new_y, ap->param1, ap->param2, debug );
+            grb_ra_line( state->x, state->y, new_x, new_y, ap->param1 + offset, ap->param2 + offset, debug );
         }else if (ap->type == 'M') {
             fprintf(stderr, "Error: Function not implemented: move polygon\n");
         }
@@ -506,10 +503,13 @@ void parse_coordinate_command(const char* line, GerberState* state) {
         state->y = new_y;
         //printf("MOVE to: (%.4f,%.4f)\n", new_x, new_y);
     }else if (d_code == 3) {  // D03 - коснуться инструментом в одной точке
+        double tool_d = env_d("tool_d");
+        int tinside  = env_i("tool_inside");
+        double offset = ( tinside?(-tool_d):(tool_d) );
         if (ap->type == 'C') {
-            grb_line_milling( new_x, new_y, new_x, new_y, ap->param1, debug );
+            grb_line_milling( new_x, new_y, new_x, new_y, ap->param1+offset, debug );
         }else if (ap->type == 'R') {
-            grb_ra_line( new_x, new_y, new_x, new_y, ap->param1, ap->param2, debug );
+            grb_ra_line( new_x, new_y, new_x, new_y, ap->param1+offset, ap->param2+offset, debug );
         }else if (ap->type == 'M') {
             Macro* m = macro_by_name(state, ap->macro);
             //printf("M: %s %i\n\n", m->macro, m->len);
