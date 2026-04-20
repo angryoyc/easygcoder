@@ -459,11 +459,6 @@ void parse_coordinate_command(const char* line, GerberState* state) {
 		message(1, "\r%i lines processed...", grbr_lines_count++ );
 	}
 
-//	if( strcmp("X-1016000Y-4686300D01*", line) == 0){
-//		printf("DEBUG MODE ENABLED!!!\n");
-//		debug = 1;
-//	}
-
 //	printf("grbr_lines_count   =   %i\n", grbr_lines_count);
 	//if( grbr_lines_count == 2 ) debug = 1;
 
