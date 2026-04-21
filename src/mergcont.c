@@ -213,7 +213,7 @@ Refitem_t* get_next_seg( Refitem_t* from, Point_t* p, int debug ){
 			Refitem_t* item = p->links.arr[i];
 			if( !item->inshadow && is_seg(item) && (item != from) ){
 				// Берём угол между двума сегментами - from и item.
-				// При этом целевой конец для from берём тот который совпадает с исследуемой точкой (то есть во входящем направлении) 
+				// При этом целевой конец для from берём тот который совпадает с исследуемой точкой (то есть во входящем направлении)
 				// а для item берём конец, котороый НЕ совпадают с исследуемой точкой (то есть в исходящем направлении)
 //				char* cn1 = endname(from, p, 1);
 //				char* cn2 = endname(item, p, 0);
@@ -265,9 +265,7 @@ int obhod_to_dir( Refitem_t* start, Cont_t* cont,  char* _side ){
 		if( cpl > 1 ){ // если не упёрлись в конец контура
 			// здесь надо выбрать следующий item
 			item = get_next_seg( item, p, 0 );
-			if( item == start ){
-				break;
-			}
+			if( item == start ) break;
 			side = ( get_seg_end( item, "a" ) == p)?"r":"l";
 		}else{ // иначе  выходим (так вообще-то быть не должно)
 			break;
@@ -281,16 +279,23 @@ void calc_areas_visabiliny( Refholder_t* list ){
 	Refholder_t* curr = list;
 	while(curr){
 		Cont_t* cont = (Cont_t*) curr->refitem;
+		printf("Contour:\n");
 		int cont_r = 0;
 		int cont_l = 0;
 		for( int i=0; i<cont->links.count; i++ ){
 			if( is_seg( cont->links.arr[i] ) ){
 				Refitem_t* seg = cont->links.arr[i];
+				Line_t* l = (Line_t*) seg;
+				print_line(l);
 				if( seg->cont_r == cont ) cont_r++;
 				if( seg->cont_l == cont ) cont_l++;
+				printf("l:(%i), r:(%i) \n", ( seg->cont_l == cont ), ( seg->cont_r == cont ));
 			}
-		}
-		cont->mincc = ( (cont_l > 0) && (cont_r == 0) )?0:1;
+		}	
+//		cont->mincc = ( (cont_l > 0) && (cont_r == 0) )?0:1;
+		cont->mincc = ( (cont_l > 0) )?0:1;
+		printf("cont->mincc = %i\n\n", cont->mincc );
+
 		curr = curr->next;
 	}
 }
@@ -308,7 +313,7 @@ void find_areas( Refholder_t* souce_list ){
 		//print_item( curr );
 		int count_of_items = obhod_to_dir( curr, next_cont, "r" );
 		push2list( (Refitem_t*) next_cont, &list );
-		//printf("Контур ok:\n");
+		//printf("Контур r ok: %p\n", list);
 	}
 	remove_cont(&next_cont);
 	while(1){
@@ -319,7 +324,7 @@ void find_areas( Refholder_t* souce_list ){
 		//print_item( curr );
 		int count_of_items = obhod_to_dir( curr, next_cont, "l" );
 		push2list( (Refitem_t*) next_cont, &list );
-		//printf("Контур ok:\n");
+		//printf("Контур l ok %p:\n", list);
 	}
 	remove_cont( &next_cont );
 	calc_areas_visabiliny( list );
@@ -329,15 +334,23 @@ void find_areas( Refholder_t* souce_list ){
 		for( int i=0; i<cont->links.count; i++ ){
 			if( is_seg( cont->links.arr[i] ) ){
 				Refitem_t* item = cont->links.arr[i];
+				//Line_t* l = (Line_t*) item;
+				//print_line(l);
+				//printf("inshadow: %i; item->cont_r->mincc=%i; item->cont_l->mincc=%i; item->contcount: %i\n", item->inshadow, item->cont_r->mincc, item->cont_l->mincc, item->contcount);
 				if( item->inshadow ){
+					//printf("| inshadow: %i; ", item->inshadow);
 					item->contcount = 1;
 				}else{
+					//printf("| item->cont_r->mincc=%i; ", item->cont_r->mincc);
+					//printf("| item->cont_l->mincc=%i; ", item->cont_l->mincc);
 					if( item->cont_r->mincc != item->cont_l->mincc ){
 						item->contcount = 0;
 					}else{
 						item->contcount = 1;
 					}
 				}
+				//printf("|  item->contcount=%i; ",  item->contcount);
+				//printf("\n");
 			}
 		}
 		cur = cur->next;
