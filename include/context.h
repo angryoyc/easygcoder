@@ -24,7 +24,10 @@ void clean_all_cont();
 int8_t copy_ctx2ctx( char* src, char* dst, Cont_t* src_cont );
 
 uint8_t obhod( Refitem_t* _next, Cont_t* cont );
+
 Cont_t* first_cont( Context_t* _ctx );
+Cont_t* last_cont( Context_t* _ctx );
+
 void clean_contcount( Context_t* _ctx );
 void marking_of_imposed();
 

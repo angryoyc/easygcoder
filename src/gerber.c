@@ -118,10 +118,51 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 	find_all_conts();
 }
 
-Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y ){
+/*
+void fix_app( Aperture* ap, double d ){
+	Context_t* ctx_dst = create_context("dst_macro");
+	Context_t* ctx = create_context("tmp_macro");
+	Cont_t* cont = create_cont();
+	Point_t* prev = NULL;
+	Point_t* first = NULL;
+	if( ap->points_len >0 ){
+		for( int i = 0; i < ap->points_len; i++){
+			Point_t* curr = create_p(ap->points[i].x, ap->points[i].y);
+			if( !first ) first = curr;
+			if( prev ){
+				Line_t *l = create_line( prev, curr);
+				add_item2cont((Refitem_t*) l, cont );
+			}
+			prev = curr;
+		}
+		Line_t *l = create_line( prev, first);
+		add_item2cont( (Refitem_t*) l, cont );
+		cont_reorder( cont, -1 );
+	}
+	outline_milling( cont, ctx_dst, d/2 );
+	select_context( ctx_dst->name );
+
+		printf("\n");
+		walk_around_all_cont("svg", stdout);
+
+	free_context_by_name( ctx_dst->name );
+	free_context_by_name( ctx->name );
+};
+*/
+
+//Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y ){
+Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int mirror_y ){
 	Point_t* prev = NULL;
 	Point_t* next = NULL;
 	Point_t* start = NULL;
+
+	Context_t* ctx_curr = get_context();
+	Context_t* ctx_dst = create_context("dst_macro");
+	Context_t* ctx = create_context("tmp_macro");
+
+	select_context( ctx->name );
+
+
 	Cont_t* cont = create_cont();
 	for( int i = 0; i < ap->points_len; i++ ){
 		if( next ) prev = next;
@@ -138,8 +179,82 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y 
 		Line_t* l = create_line( next, start );
 		add_item2cont( (Refitem_t*) l, cont );
 	}
+
+	cont_reorder( cont, -1 );
+	outline_milling( cont, ctx_dst, d, 1 );
+
+	select_context( ctx_dst->name );
+
+//printf("---\n");
+//walk_around_all_cont("svg", stdout);
+
+
+	for( int i=0; i < ctx_dst->links.count; i++){
+		Refitem_t* item = (Refitem_t*) ctx_dst->links.arr[i];
+		if( item->type == OBJ_TYPE_CONTUR ){
+			Cont_t* next = (Cont_t*) item;
+			copy_ctx2ctx( ctx_dst->name, ctx_curr->name, next );
+			break;
+		}
+	}
+
+    cont = last_cont(ctx_curr);
+
+	free_context_by_name( ctx->name );
+	free_context_by_name( ctx_dst->name );
+	select_context( ctx_curr->name );
+
+	cont_reorder( cont, -1 );
+
 	return cont;
 };
+
+
+/*
+Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int mirror_y ){
+    printf("poligon d=%f\n", d);
+	Point_t* prev = NULL;
+	Point_t* start = NULL;
+	Context_t* ctx_curr = get_context();
+	Context_t* ctx_dst = create_context("dst_macro");
+	Context_t* ctx = create_context("tmp_macro");
+	Cont_t* cont = create_cont();
+	if( ap->points_len > 0 ){
+		for( int i = 0; i < ap->points_len; i++ ){
+			double x = round_to_decimal(ap->points[i].x, 2) * (mirror_y?-1:1);
+			double y = round_to_decimal(ap->points[i].y, 2) * (mirror_x?-1:1);
+			Point_t* curr = create_p( _x + x, _y + y );
+			if( !start ) start = curr;
+			if( prev ){
+				Line_t* l = create_line( prev, curr );
+				add_item2cont( (Refitem_t*) l, cont );
+			}
+			prev = curr;
+		}
+		Line_t* l = create_line( prev, start );
+		add_item2cont( (Refitem_t*) l, cont );
+		cont_reorder( cont, -1 );
+	}
+	outline_milling( cont, ctx_dst, d, -1 );
+
+	for( int i=0; i < ctx_dst->links.count; i++){
+		Refitem_t* item = (Refitem_t*) ctx_dst->links.arr[i];
+		if( item->type == OBJ_TYPE_CONTUR ){
+			Cont_t* next = (Cont_t*) item;
+			copy_ctx2ctx( ctx_dst->name, ctx_curr->name, next );
+			break;
+		}
+	}
+	select_context( ctx_dst->name );
+	free_context_by_name( ctx->name );
+	select_context( ctx_curr->name );
+	free_context_by_name( ctx_dst->name );
+	return cont;
+};
+
+//printf("---\n");
+//walk_around_all_cont("svg", stdout);
+*/
 
 void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
 	int mirror_x = env_i("mirror_x");
@@ -147,8 +262,7 @@ void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double d = env_d("tool_d");
-	d = d/2;
-	Cont_t* cont = poligon(x1, y1, ap, mirror_x, mirror_y);
+	Cont_t* cont = poligon(x1, y1, ap, d, mirror_x, mirror_y);
 	int r = cont_reorder( cont, -1 );
 	if( r = -1 ){
 		Refholder_t* list = split_all(0);
@@ -325,6 +439,7 @@ double get_par( Macro* mc, double arg[], int i){
 }
 
 
+
 // Парсинг определения апертуры
 void parse_aperture_definition( const char* line, GerberState* state ){
 	//printf("parse_aperture_definition\n");
@@ -367,6 +482,7 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 		//printf("parse_aperture_definition with macro %s\n", ap->macro);
 		Macro* mc = macro_by_name(state, ap->macro );
 		if( mc ){
+			double d = env_d("tool_d");
 			int code = (int) mc->params[0].value;
 			if( code == 4 ){ //просто полигон по точкам
 				int expl = (int) mc->params[1].value;
@@ -376,13 +492,13 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 					ap->points[i].y = mc->params[3+i*2+1].value;
 				}
 				ap->points_len = count;
+				//fix_app( ap, d );
 			}else if(code==21){
 				ap->points_len = 4;
 				char* ptr = (char*) line + bytes;
 				double arg[30];
 				int n = sscanf(ptr, ",%lfX%lfX%lf*", &arg[1], &arg[2], &arg[3]);
 				if( n >= 3 ){
-					double d = env_d("tool_d");
 					double exp = get_par( mc, arg, 1 );
 					double w = get_par( mc, arg, 2 );
 					double h = get_par( mc, arg, 3 );

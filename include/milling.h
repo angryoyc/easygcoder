@@ -10,7 +10,10 @@ void arc_milling(Arc_t* arc, double r, int dir, Cont_t** cont1, Cont_t** cont2);
 Cont_t* ra_line( double x1, double y1, double x2, double y2, double W, double H, int _dir );
 //void outline_milling(Cont_t* cont, double r);
 //Context_t* outline_milling(Cont_t* cont, double r);
-void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r);
+//void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r);
+
+void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r, int dir);
+
 void punch_milling( double x, double y, double d, int dir, Cont_t** cont1 );
 
 

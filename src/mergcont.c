@@ -86,6 +86,9 @@ Factor_t factor_between_vectors( Vector_t v1, Vector_t v2 ){
 	return f;
 }
 
+/*
+* 1 если left < rigth
+*/
 uint8_t factor_lt_factor( Factor_t left, Factor_t right ){
 	if( fabs(left.dt - right.dt) < epsilon ){
 		// сравниваем кривизну
@@ -96,6 +99,9 @@ uint8_t factor_lt_factor( Factor_t left, Factor_t right ){
 	}
 }
 
+/*
+* 1 если left > rigth
+*/
 uint8_t factor_gt_factor( Factor_t left, Factor_t right ){
 	return factor_lt_factor( left, right )?0:1;
 }
@@ -156,7 +162,7 @@ Refitem_t* get_first_free( Refholder_t* souce_list, char* side ){
 }
 
 /*
-* Возвращает тот или иной конец (точку) сегмента независимо от его типа
+* Возвращает точку a|b на конце сегмента, независимо от типа сегмента
 */
 Point_t* get_seg_end(Refitem_t* item, char* endname ){
 	if( item ){
@@ -181,6 +187,9 @@ Point_t* get_seg_end(Refitem_t* item, char* endname ){
 	return NULL;
 };
 
+/*
+* Подсчёт количества сегментов не в тени в заданной точке
+*/
 int count_point_links( Point_t* p ){
 	int s = 0;
 	if( p && p->links.arr && (p->links.count>0) ){
@@ -192,11 +201,12 @@ int count_point_links( Point_t* p ){
 	return s;
 }
 
-
-Refitem_t* get_last_seg( Refitem_t* from, Point_t* p, int debug ){
+/*
+* Поиск следующего сегмента в точке p относительно сегмента from
+*/
+Refitem_t* get_next_seg( Refitem_t* from, Point_t* p, int debug ){
 	Refitem_t* selected = NULL;
 	double angle = 0;
-
 	Factor_t factor;
 	if( p && p->links.arr && (p->links.count>0) ){
 		for( int i = 0; i < p->links.count; i++ ){
@@ -209,7 +219,6 @@ Refitem_t* get_last_seg( Refitem_t* from, Point_t* p, int debug ){
 //				char* cn2 = endname(item, p, 0);
 				//double a = angle_between_vectors( item2vect(from, p, 1 ), item2vect(item, p, 0 ) );
 				Factor_t f = factor_between_vectors( item2vect(from, p, 1 ), item2vect(item, p, 0 ) );
-
 /*
 				if(debug){
 					printf("\n [T] " );
@@ -223,15 +232,13 @@ Refitem_t* get_last_seg( Refitem_t* from, Point_t* p, int debug ){
 					printf(" dk = %f\n", f.dk);
 				}
 */
-
-				if( !selected ){
+				if( !selected ){ // если это первый сегмент, то берём его
 					selected = item;
 					factor = f;
-				}else if( factor_lt_factor(f, factor) ){
+				}else if( factor_lt_factor(f, factor) ){ // если это сегмент с наименьшим фактором, запоминаем его.
 					selected = item;
 					factor = f;
 				}
-
 			}
 		}
 	}
@@ -244,12 +251,8 @@ int obhod_to_dir( Refitem_t* start, Cont_t* cont,  char* _side ){
 	Refitem_t* item = start;
 	while(1){
 		if( strcmp( side, "r" )==0 ){
-			//printf("\nadd_item2cont_r %p\n", item);
-			//print_item( item );
 			add_item2cont_r( item, cont );
 		}else{
-			//printf("\nadd_item2cont_l %p\n", item);
-			//print_item( item );
 			add_item2cont_l( item, cont );
 		}
 		Point_t* p = NULL;
@@ -258,20 +261,15 @@ int obhod_to_dir( Refitem_t* start, Cont_t* cont,  char* _side ){
 		}else{
 			p = get_seg_end( item, "a" );
 		}
-
 		int cpl = count_point_links( p );
-		if( cpl > 1 ){ // если упёрлись в конец контура, то выходим (так вообще-то быть не должно)
+		if( cpl > 1 ){ // если не упёрлись в конец контура
 			// здесь надо выбрать следующий item
-			int debug = 0;
-			// ( is_arc(item) && (((Arc_t*) item)->id!=1) && (((Arc_t*) item)->id!=7));
-			item = get_last_seg( item, p,  debug );
-			//if( debug ) exit(1);
+			item = get_next_seg( item, p, 0 );
 			if( item == start ){
-				//printf("break1\n");
 				break;
 			}
 			side = ( get_seg_end( item, "a" ) == p)?"r":"l";
-		}else{
+		}else{ // иначе  выходим (так вообще-то быть не должно)
 			break;
 		}
 		

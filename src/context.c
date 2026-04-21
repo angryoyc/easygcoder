@@ -662,6 +662,14 @@ Cont_t* first_cont( Context_t* _ctx ){
 }
 
 /*
+* Возвращает последний  контур в контексте
+*/
+Cont_t* last_cont( Context_t* _ctx ){
+	Context_t* ctx = (_ctx != NULL)?_ctx:get_context();
+	return (Cont_t*) last_obj_by_type( (Refitem_t*) ctx, OBJ_TYPE_CONTUR );
+}
+
+/*
 * Сбросить показатель contcount для всех примитивов контекста.
 */
 void clean_contcount( Context_t* _ctx ){
