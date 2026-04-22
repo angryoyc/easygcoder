@@ -275,6 +275,72 @@ int obhod_to_dir( Refitem_t* start, Cont_t* cont,  char* _side ){
 	return 0;
 }
 
+// сброс признака видимости для всех областей (контуров, face)
+void clea_areas_visabiliny( Refholder_t* list ){
+	Refholder_t* curr = list;
+	while(curr){
+		Cont_t* cont = (Cont_t*) curr->refitem;
+		cont->mincc = 0;
+		curr = curr->next;
+	}
+}
+
+int calc_areas_visabiliny_iterate( Refholder_t* list ){
+	printf("calc_areas_visabiliny_iterate:\n");
+	Refholder_t* curr = list;
+	int s = 0;
+	while(curr){
+		Cont_t* cont = (Cont_t*) curr->refitem;
+		printf("Contour:\n");
+		int cont_r = 0;
+		int cont_l = 0;
+		if( cont->mincc == 0 ){
+			for( int i=0; i<cont->links.count; i++ ){
+				if( is_seg( cont->links.arr[i] ) ){
+					Refitem_t* seg = cont->links.arr[i];
+					Line_t* l = (Line_t*) seg;
+					print_line(l);
+					if( seg->cont_r == cont ){
+						if( seg->cont_l->mincc == 0 ){
+							cont_r++;
+						}else if( seg->cont_l->mincc == 1 ){
+							cont_r++;
+						}else if( seg->cont_l->mincc == -1 ){
+							cont_l++;
+						}
+					}
+					if( seg->cont_l == cont ){
+						if( seg->cont_r->mincc == 0 ){
+							cont_l++;
+						}else if( seg->cont_r->mincc == 1 ){
+							cont_r++;
+						}else if( seg->cont_r->mincc == -1 ){
+							cont_l++;
+						}
+					}
+					printf("l:(%i), r:(%i) \n", cont_l, cont_r);
+				}
+			}
+			if( cont_r == 0 ) cont->mincc = -1;
+			if( cont_l == 0 ) cont->mincc = 1;
+		}
+		printf("cont->mincc = %i\n\n", cont->mincc );
+		s+=(cont->mincc == 0)?1:0; // считаем количество областей с неопределённым признаком видимости
+		curr = curr->next;
+	}
+	return s;
+}
+
+void calc_areas_visabiliny( Refholder_t* list ){
+	void clea_areas_visabiliny( Refholder_t* list );
+	int c=2;
+	while(c){
+		calc_areas_visabiliny_iterate( list );
+		c--;
+	} // крутим цикл пока есть хотя бы одна область с неопределённой видимостью.
+}
+
+/*
 void calc_areas_visabiliny( Refholder_t* list ){
 	Refholder_t* curr = list;
 	while(curr){
@@ -293,12 +359,27 @@ void calc_areas_visabiliny( Refholder_t* list ){
 			}
 		}	
 //		cont->mincc = ( (cont_l > 0) && (cont_r == 0) )?0:1;
-		cont->mincc = ( (cont_l > 0) )?0:1;
-		printf("cont->mincc = %i\n\n", cont->mincc );
-
+        cont->mincc = 0;
+		if( cont_r == 0 ) cont->mincc = 1;
+		if( cont_l == 0 ) cont->mincc = -1;
+		//cont->mincc = ( (cont_l > 0) )?0:1;
+		//printf("cont->mincc = %i\n\n", cont->mincc );
 		curr = curr->next;
 	}
-}
+*/
+
+/*
+	curr = list;
+	while(curr){
+		Cont_t* cont = (Cont_t*) curr->refitem;
+		if( cont->mincc != 0 ){
+			
+		}
+		curr = curr->next;
+	}
+*/
+
+
 
 void find_areas( Refholder_t* souce_list ){
 	Refholder_t* list = NULL;
@@ -327,6 +408,7 @@ void find_areas( Refholder_t* souce_list ){
 		//printf("Контур l ok %p:\n", list);
 	}
 	remove_cont( &next_cont );
+	printf("\n\nРасчёт окончен!\n\n");
 	calc_areas_visabiliny( list );
 	Refholder_t* cur = souce_list;
 	while(cur){
