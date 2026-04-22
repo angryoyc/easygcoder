@@ -62,7 +62,7 @@ DESCRIBE(Геометрия) {
 		add_item2cont((Refitem_t*) m2, cont2);
 		add_item2cont((Refitem_t*) m3, cont2);
 		add_item2cont((Refitem_t*) m4, cont2);
-		cont_reorder(cont2, -1);
+		cont_reorder(cont2, 1);
 
 		Refholder_t* list = split_all(0);
 		int points = list_len(list);
