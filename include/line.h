@@ -28,8 +28,8 @@ uint8_t create_p_of_line_x_line(Point_t* a, Point_t* b, Point_t* c, Point_t* d, 
 
 void line_get_bounds(const Line_t* l, double* xmin, double* xmax, double* ymin, double* ymax);
 
-void replace_a( Line_t* l, Point_t* p);
-void replace_b( Line_t* l, Point_t* p);
-void replace_same_p2lines( Line_t* l1, Line_t* l2 );
+int replace_a( Line_t* l, Point_t* p);
+int replace_b( Line_t* l, Point_t* p);
+int replace_same_p2lines( Line_t* l1, Line_t* l2 );
 
 uint8_t is_line(Refitem_t* item);

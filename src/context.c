@@ -161,8 +161,8 @@ Refholder_t* split_all(int debug){
 					Refitem_t* item2 = ctx->links.arr[j];
 					if( is_cont(item2) ){
 						int cont_s = split_cont_by_cont( (Cont_t*) item1, (Cont_t*) item2, debug );
+						//printf(" CONT by CONT cross count: %i \n", cont_s);
 						if( cont_s > 0 ){
-							//printf("cont_s  = %i \n", cont_s);
 							push2list( (Refitem_t*) item1, &list );
 							push2list( (Refitem_t*) item2, &list );
 							s = s + cont_s;

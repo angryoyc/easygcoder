@@ -41,6 +41,7 @@ uint8_t create_p_of_arc_x_arc(Arc_t* arc1, Arc_t* arc2, Point_t** p1, Point_t** 
 void create_p_of_line_x_arc(Line_t* l, Arc_t* crcl, Point_t** p1, Point_t** p2);
 uint8_t xy_of_line_x_arc(double ax, double ay, double bx, double by, Arc_t* crcl, double* p1x, double* p1y, double* p2x, double* p2y );
 
-void replace_arc_a( Arc_t* arc, Point_t* p);
-void replace_arc_b( Arc_t* arc, Point_t* p);
+int replace_arc_a( Arc_t* arc, Point_t* p);
+int replace_arc_b( Arc_t* arc, Point_t* p);
+
 uint8_t is_arc(Refitem_t* item);

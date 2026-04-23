@@ -113,7 +113,7 @@ void set_dbl_param(struct pair ** config, char* name, double defval, char* conff
 	}
 	if( strval && (strlen(strval))>0 ){
 		val = strtod(strval, &end );
-		if(  end == strval ){
+		if( end == strval ){
 			fprintf(stderr, "Config error in parameter %s\n", name);
 			exit(1);
 		};

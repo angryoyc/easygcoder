@@ -361,9 +361,7 @@ int main(int argc, char* argv[]) {
 	if(ctx_main) free_context_by_name(ctx_main->name);
 	if(ctx_outline) free_context_by_name(ctx_outline->name);
 	if(ctx_drill) free_context_by_name(ctx_drill->name);
-
 	printf("\n");
 	return 0;
-
 }
 

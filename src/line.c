@@ -319,28 +319,38 @@ void line_get_bounds(const Line_t* l, double* xmin, double* xmax, double* ymin, 
 	}
 };
 
-void replace_a( Line_t* l, Point_t* p){
-	Point_t* old = l->a;
-	cp_links( (Refitem_t*) old, (Refitem_t*) p);
-	l->a = NULL;
-	remove_p( &old );
-	l->a = p;
-	linkobj2obj( l, l->a );
+int replace_a( Line_t* l, Point_t* p){
+	if( l->a != p ){
+		Point_t* old = l->a;
+		cp_links( (Refitem_t*) old, (Refitem_t*) p);
+		l->a = NULL;
+		remove_p( &old );
+		l->a = p;
+		linkobj2obj( l, l->a );
+		return 1;
+	}
+	return 0;
 }
 
-void replace_b( Line_t* l, Point_t* p){
-	Point_t* old = l->b;
-	cp_links( (Refitem_t*) old, (Refitem_t*) p);
-	l->b = NULL;
-	remove_p( &old );
-	l->b = p;
-	linkobj2obj( l, l->b );
+int replace_b( Line_t* l, Point_t* p){
+	if( l->b != p ){
+		Point_t* old = l->b;
+		cp_links( (Refitem_t*) old, (Refitem_t*) p);
+		l->b = NULL;
+		remove_p( &old );
+		l->b = p;
+		linkobj2obj( l, l->b );
+		return 1;
+	}
+	return 0;
 }
 
-void replace_same_p2lines( Line_t* l1, Line_t* l2 ){
-	if( p_eq_p( l1->a, l2->a ) && (l1->a != l2->a) ) replace_a( l2, l1->a);
-	if( p_eq_p( l1->a, l2->b ) && (l1->a != l2->b) ) replace_b( l2, l1->a);
-	if( p_eq_p( l1->b, l2->a ) && (l1->b != l2->a) ) replace_a( l2, l1->b);
-	if( p_eq_p( l1->b, l2->b ) && (l1->b != l2->a) ) replace_b( l2, l1->b);
+int replace_same_p2lines( Line_t* l1, Line_t* l2 ){
+	int s = 0;
+	if( p_eq_p( l1->a, l2->a ) && (l1->a != l2->a) ) s+=replace_a( l2, l1->a);
+	if( p_eq_p( l1->a, l2->b ) && (l1->a != l2->b) ) s+=replace_b( l2, l1->a);
+	if( p_eq_p( l1->b, l2->a ) && (l1->b != l2->a) ) s+=replace_a( l2, l1->b);
+	if( p_eq_p( l1->b, l2->b ) && (l1->b != l2->a) ) s+=replace_b( l2, l1->b);
+	return s;
 }
 

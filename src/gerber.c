@@ -111,7 +111,9 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 	}
 	*/
 	double R = diameter/2;
-	line_milling( x1, y1, x2, y2, round_to_decimal(R, 2), -1, &cont );
+	R = round_to_decimal(R, 2);
+	if( R <= 0 ) R = 0.01;
+	line_milling( x1, y1, x2, y2, R , -1, &cont );
 	Refholder_t* list = split_all(0);
 	find_areas( list );
 	clean_conts_by_list( &list );
@@ -162,7 +164,6 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int
 
 	select_context( ctx->name );
 
-
 	Cont_t* cont = create_cont();
 	for( int i = 0; i < ap->points_len; i++ ){
 		if( next ) prev = next;
@@ -179,7 +180,6 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int
 		Line_t* l = create_line( next, start );
 		add_item2cont( (Refitem_t*) l, cont );
 	}
-
 	cont_reorder( cont, -1 );
 	outline_milling( cont, ctx_dst, d, 1 );
 
@@ -598,10 +598,12 @@ void parse_coordinate_command(const char* line, GerberState* state) {
         double tool_d = env_d("tool_d");
         int tinside  = env_i("tool_inside");
         double offset = ( tinside?(-tool_d):(tool_d) );
-        printf("OFFSET: %f\n", offset);
+        //printf("OFFSET: %f\n", offset);
         if (ap->type == 'C') {
-            printf("ap->param1: %f; SIZE: %f\n",ap->param1,  ap->param1 + offset);
+            //printf("ap->param1: %f; SIZE: %f\n",ap->param1,  ap->param1 + offset);
+            printf(" grb_line_milling start with R = %f \n", ap->param1  );
             grb_line_milling( state->x, state->y, new_x, new_y, ap->param1 + offset, debug );
+            printf(" grb_line_milling ok \n");
         }else if (ap->type == 'R') {
             grb_ra_line( state->x, state->y, new_x, new_y, ap->param1 + offset, ap->param2 + offset, debug );
         }else if (ap->type == 'M') {
