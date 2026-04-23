@@ -181,6 +181,7 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int
 		add_item2cont( (Refitem_t*) l, cont );
 	}
 	cont_reorder( cont, -1 );
+
 	outline_milling( cont, ctx_dst, d, 1 );
 
 	select_context( ctx_dst->name );

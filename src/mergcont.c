@@ -22,6 +22,25 @@ struct {
 	double angle;
 } SegList_t;
 
+struct p {
+	float x;
+	float y;
+};
+
+int lcng(struct p points[], int point_count){
+	double area = 0.0;
+	for( int i = 0; i < point_count; i++ ){
+		int j = (i + 1) % point_count;
+		double term = (points[i].x * points[j].y - points[j].x * points[i].y);
+		area += term;
+		//printf("  %d: %.1f*%.1f - %.1f*%.1f = %.1f\n", i, points[i].x, points[j].y, points[j].x, points[i].y, term);
+	}
+	area /= 2.0;
+	if( area > 0.0 ) return 1;   // CCW - против часовой
+	if( area < 0.0 ) return -1;  // CW - по часовой
+	return 0;                    // Площадь нулевая - неопределено
+}
+
 
 double angle_factor(Point_t* from, Point_t* at, Point_t* to){
 	double v_in_x = at->x - from->x;
@@ -287,6 +306,9 @@ void clea_areas_visabiliny( Refholder_t* list ){
 
 int find_determinated_areas( Refholder_t* list ){
 	Refholder_t* curr = list;
+	struct p points[100];
+	int index = 0;
+	int flag = 1;
 	while(curr){
 		Cont_t* cont = (Cont_t*) curr->refitem;
 		if( cont->mincc == 0 ){
@@ -295,6 +317,7 @@ int find_determinated_areas( Refholder_t* list ){
 			for( int i=0; i<cont->links.count; i++ ){
 				if( is_seg( cont->links.arr[i] ) ){
 					Refitem_t* seg = cont->links.arr[i];
+					if( seg->cont->dir == -1 ) flag = 0;
 					if( seg->cont_r == cont ){
 						cont_r++;
 					}else if( seg->cont_l == cont ){
@@ -302,11 +325,23 @@ int find_determinated_areas( Refholder_t* list ){
 					}
 				}
 			}
-			if( (cont_r == 0) && (cont_l>0)  ) cont->mincc = -1;
+			if( (cont_r == 0) && (cont_l>0) ) cont->mincc = -1;
 			if( (cont_l == 0) && (cont_r>0) ) cont->mincc = 1;
-//			if( cont->mincc != 0 ) printf("Determinated Contour %i\n", cont->mincc);
+			if( cont->mincc != 0 ) printf("Determinated Contour %i cont->dir=%i\n", cont->mincc, cont_dir(cont) );
 		}
 		curr = curr->next;
+	}
+	if( flag ){ //printf("//ВНИМАНИЕ! не было контуров с обходом по часовой - только против (на вырез материала)\n");
+		curr = list;
+		while(curr){
+			Cont_t* cont = (Cont_t*) curr->refitem;
+			if( (cont->mincc == 1) &&  (cont_dir(cont)>0) ){ // Для контура с отризательным cont_dir (надеясь, что этот контур соответствует "холсту") устанавливаем "незаполненность"
+				//printf("КОРРЕКЦИЯ произведена!\n");
+				cont->mincc = -1;
+				break;
+			}
+			curr = curr->next;
+		}
 	}
 }
 
@@ -353,12 +388,12 @@ int calc_areas_visabiliny_iterate( Refholder_t* list ){
 
 
 int calc_areas_visabiliny_iterate2( Refholder_t* list ){
-	printf("calc_areas_visabiliny_iterate:\n");
+	//printf("calc_areas_visabiliny_iterate:\n");
 	Refholder_t* curr = list;
 	int s = 0;
 	while(curr){
 		Cont_t* cont = (Cont_t*) curr->refitem;
-		printf("Contour:\n");
+		//printf("Contour:\n");
 		if( cont->mincc == 0 ){
 			int l_count = 0;
 			int r_count = 0;
@@ -397,7 +432,7 @@ int calc_areas_visabiliny_iterate2( Refholder_t* list ){
 void calc_areas_visabiliny( Refholder_t* list ){
 	clea_areas_visabiliny( list );
 	find_determinated_areas( list );
-	int c=2;
+	int c=5;
 	while(c){
 		if( !calc_areas_visabiliny_iterate( list ) ) break;
 		c--;
@@ -442,25 +477,25 @@ void find_areas( Refholder_t* souce_list ){
 		next_cont = create_cont();
 		curr = get_first_free( souce_list, "r" );
 		if( !curr ) break;
-		//printf("Найден свободный ITEM (R):\n");
-		//print_item( curr );
+		printf("Найден свободный ITEM (R):\n");
+		print_item( curr );
 		int count_of_items = obhod_to_dir( curr, next_cont, "r" );
 		push2list( (Refitem_t*) next_cont, &list );
-		//printf("Контур r ok: %p\n", list);
+		printf("Контур r ok: %p\n", list);
 	}
 	remove_cont(&next_cont);
 	while(1){
 		next_cont = create_cont();
 		curr = get_first_free( souce_list, "l" );
 		if( !curr ) break;
-		//printf("Найден свободный ITEM (L):\n");
-		//print_item( curr );
+		printf("Найден свободный ITEM (L):\n");
+		print_item( curr );
 		int count_of_items = obhod_to_dir( curr, next_cont, "l" );
 		push2list( (Refitem_t*) next_cont, &list );
-		//printf("Контур l ok %p:\n", list);
+		printf("Контур l ok %p:\n", list);
 	}
 	remove_cont( &next_cont );
-	//printf("\n\nРасчёт окончен!\n\n");
+	printf("\n\nРасчёт окончен! найдено контуров: %i\n\n", list_len(list));
 	calc_areas_visabiliny( list );
 	Refholder_t* cur = souce_list;
 	while(cur){

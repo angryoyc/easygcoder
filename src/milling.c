@@ -69,7 +69,7 @@ void line_milling( double x1, double y1, double x2, double y2, double R, int dir
 			// Дуга на старте
 			Arc_t* arc1 = create_arc(x1, y1, R);
 			add_item2cont( (Refitem_t*) arc1, *cont1);
-			break_the_circle(arc1, d, dir);
+			break_the_circle(arc1, d, -1);
 			Arc_t* new_arc1 = split_arc_by_p(arc1, c);
 			remove_arc( &new_arc1 );
 			// ПРЯМАЯ1 слева, по движению
@@ -77,7 +77,7 @@ void line_milling( double x1, double y1, double x2, double y2, double R, int dir
 			// Дуга на финише
 			Arc_t* arc2 = create_arc(x2, y2, R);
 			add_item2cont( (Refitem_t*) arc2, *cont1);
-			break_the_circle(arc2, e, dir);
+			break_the_circle(arc2, e, -1);
 			Arc_t* new_arc2 = split_arc_by_p(arc2, f);
 			remove_arc( &new_arc2 );
 			// ПРЯМАЯ2 справа, по движению
@@ -431,30 +431,32 @@ void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r, int dir){
 					if(item->type == OBJ_TYPE_LINE){
 //						printf("milling line!!\n");
 						line = (Line_t *) item;
-						line_milling( line->a->x, line->a->y, line->b->x, line->b->y, r, -1, &new_cont1 );
+						line_milling( line->a->x, line->a->y, line->b->x, line->b->y, r, dir, &new_cont1 );
 					}else if(item->type == OBJ_TYPE_ARC){
 //						printf("milling arc!!\n");
 						arc = (Arc_t *) item;
-						arc_milling( arc, r, -1, &new_cont1, &new_cont2 );
+						arc_milling( arc, r, dir, &new_cont1, &new_cont2 );
 					}
 					if( new_cont2 ){
 						fix_single_arc_cont( new_cont2 );
 					}
-					if( new_cont1 ){
-//						printf("MERGE!\n");
-						cont_reorder(new_cont1, dir);
-						fix_single_arc_cont( new_cont1 );
-						Refholder_t* list = split_all(0);
 //printf("===\n");
 //walk_around_all_cont("svg", stdout);
+					if( new_cont1 ){
+						//cont_reorder(new_cont1, 1);
+						//printf("MERGE with contour 1 (dir: %i)!\n", new_cont1->dir);
+						fix_single_arc_cont( new_cont1 );
+						Refholder_t* list = split_all(0);
+						push2list( (Refitem_t*) new_cont1, &list );
+						//printf("List LEN: %i\n", list_len(list) );
 						find_areas( list );
 						clean_conts_by_list( &list );
 						find_all_conts();
 					}
 				}
 			}
-//printf("+++\n");
-//walk_around_all_cont("svg", stdout);
+printf("+++\n");
+walk_around_all_cont("svg", stdout);
 		}
 		// Копируем контуры, совпадающие с исходным по напрвлению в целевой контекст
 		//printf("ctx_tmp->links.count == [%i]\n", ctx_tmp->links.count );
