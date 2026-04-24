@@ -1,5 +1,5 @@
 #define WORKDIR "/etc/easygcoder"
-#define VERSION "0.1.11"
+#define VERSION "0.1.12"
 #define TOOL_D 0.2
 #define TOOL_INSIDE 0
 #define TOOL_CH_HEIGHT 70
