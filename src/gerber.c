@@ -423,11 +423,8 @@ double get_par( Macro* mc, double arg[], int i){
 	return v;
 }
 
-
-
 // Парсинг определения апертуры
 void parse_aperture_definition( const char* line, GerberState* state ){
-	//printf("parse_aperture_definition\n");
 	char type;
 	int num;
 	char params[100];
@@ -500,7 +497,6 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 			printf("Macro %s not found\n", macroName);
 		}
 	}
-	//printf("end of parse_aperture_definition\n");
 }
 
 
