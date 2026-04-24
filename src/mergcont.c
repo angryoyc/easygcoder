@@ -327,7 +327,7 @@ int find_determinated_areas( Refholder_t* list ){
 			}
 			if( (cont_r == 0) && (cont_l>0) ) cont->mincc = -1;
 			if( (cont_l == 0) && (cont_r>0) ) cont->mincc = 1;
-			if( cont->mincc != 0 ) printf("Determinated Contour %i cont->dir=%i\n", cont->mincc, cont_dir(cont) );
+			//if( cont->mincc != 0 ) printf("Determinated Contour %i cont->dir=%i\n", cont->mincc, cont_dir(cont) );
 		}
 		curr = curr->next;
 	}
@@ -400,8 +400,8 @@ int calc_areas_visabiliny_iterate2( Refholder_t* list ){
 			for( int i=0; i<cont->links.count; i++ ){
 				if( is_seg( cont->links.arr[i] ) ){
 					Refitem_t* seg = cont->links.arr[i];
-					Line_t* l = (Line_t*) seg;
-					print_line(l);
+					//Line_t* l = (Line_t*) seg;
+					//print_line(l);
 					if( seg->cont_r == cont ){
 						if( seg->cont_l->mincc == -1 ){
 							l_count++;
@@ -416,13 +416,13 @@ int calc_areas_visabiliny_iterate2( Refholder_t* list ){
 							l_count++;
 						}
 					}
-					printf("| %s | l_count:%i;  r_count:(%i) mincc:%i \n" ,(seg->cont_r == cont)?"R":"L", l_count, r_count, cont->mincc);
+					//printf("| %s | l_count:%i;  r_count:(%i) mincc:%i \n" ,(seg->cont_r == cont)?"R":"L", l_count, r_count, cont->mincc);
 				}
 			}
 			if( (l_count == 0) && (r_count>0) ) cont->mincc = 1;
 			if( (l_count>0) ) cont->mincc = -1;
 		}
-		printf("cont->mincc = %i\n\n", cont->mincc );
+		//printf("cont->mincc = %i\n\n", cont->mincc );
 		s+=(cont->mincc == 0)?1:0; // считаем количество областей с неопределённым признаком видимости
 		curr = curr->next;
 	}
@@ -477,25 +477,25 @@ void find_areas( Refholder_t* souce_list ){
 		next_cont = create_cont();
 		curr = get_first_free( souce_list, "r" );
 		if( !curr ) break;
-		printf("Найден свободный ITEM (R):\n");
-		print_item( curr );
+		//printf("Найден свободный ITEM (R):\n");
+		//print_item( curr );
 		int count_of_items = obhod_to_dir( curr, next_cont, "r" );
 		push2list( (Refitem_t*) next_cont, &list );
-		printf("Контур r ok: %p\n", list);
+		//printf("Контур r ok: %p\n", list);
 	}
 	remove_cont(&next_cont);
 	while(1){
 		next_cont = create_cont();
 		curr = get_first_free( souce_list, "l" );
 		if( !curr ) break;
-		printf("Найден свободный ITEM (L):\n");
-		print_item( curr );
+		//printf("Найден свободный ITEM (L):\n");
+		//print_item( curr );
 		int count_of_items = obhod_to_dir( curr, next_cont, "l" );
 		push2list( (Refitem_t*) next_cont, &list );
-		printf("Контур l ok %p:\n", list);
+		//printf("Контур l ok %p:\n", list);
 	}
 	remove_cont( &next_cont );
-	printf("\n\nРасчёт окончен! найдено контуров: %i\n\n", list_len(list));
+	//printf("\n\nРасчёт окончен! найдено контуров: %i\n\n", list_len(list));
 	calc_areas_visabiliny( list );
 	Refholder_t* cur = souce_list;
 	while(cur){

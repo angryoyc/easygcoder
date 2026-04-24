@@ -52,7 +52,7 @@ void message( int offset, char * format, ... ) {
 	va_start(argv, format);
 	vsnprintf(str, 500, format, argv);
 	va_end(argv);
-	if( 0 ){
+	if( 1 ){
 		for( int i = 0; i<(2-offset); i++) printf("\033[1A");
 		printf("\r\033[K%s", str);
 		for( int i = 0; i<(2-offset); i++) printf("\n");

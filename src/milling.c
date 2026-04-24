@@ -48,7 +48,6 @@ void punch_milling( double x, double y, double d, int dir, Cont_t** cont1 ){
 }
 
 void line_milling( double x1, double y1, double x2, double y2, double R, int dir, Cont_t** cont1 ){
-	printf("line_milling start with R=%f\n", R );
 	double cx, cy, dx, dy, ex, ey, fx, fy;
 	double dist = distance( x1, y1, x2, y2 );
 	*cont1 = NULL;
@@ -85,7 +84,7 @@ void line_milling( double x1, double y1, double x2, double y2, double R, int dir
 			cont_reorder(*cont1, dir); // Направление контура определяет с какой стороны конутра заполнение. Заполнение всегда СПРАВА. Если обходим контур по часовой стрелки, значит заполняем контур, если обходим против, то заполняем всё, кроме контура
 		}
 	}
-	printf("line_milling ok \n" );
+	//printf("line_milling ok \n" );
 	return;
 };
 
@@ -455,10 +454,10 @@ void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r, int dir){
 					}
 				}
 			}
-printf("+++\n");
-walk_around_all_cont("svg", stdout);
+//printf("+++\n");
+//walk_around_all_cont("svg", stdout);
 		}
-		// Копируем контуры, совпадающие с исходным по напрвлению в целевой контекст
+		// Копируем контуры
 		//printf("ctx_tmp->links.count == [%i]\n", ctx_tmp->links.count );
 		for( int i=0; i < ctx_tmp->links.count; i++){
 			Refitem_t* item = (Refitem_t*) ctx_tmp->links.arr[i];
@@ -467,9 +466,9 @@ walk_around_all_cont("svg", stdout);
 				//printf("OBJ_TYPE_CONTUR\n");
 				Cont_t* next = (Cont_t*) item;
 				//printf("cont->dir[%i] == next->dir[%i]\n", cont->dir, next->dir );
-				if( dir == next->dir ){
+				//if( dir == next->dir ){
 					copy_ctx2ctx( ctx_tmp->name, ctx_dst->name, next );
-				}
+				//}
 			}
 		}
 		select_context( ctx->name );			// переключаемся на исходный контекст

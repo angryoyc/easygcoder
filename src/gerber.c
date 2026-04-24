@@ -93,13 +93,10 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 	Cont_t* cont = NULL;
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
-
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double x2 = round_to_decimal(_x2, 2) * (mirror_y?-1:1);
 	double y2 = round_to_decimal(_y2, 2) * (mirror_x?-1:1);
-
-
 	/*
 	if( debug ){
 		line_milling( x1, y1, x2, y2, round_to_decimal(d, 2), -1, &cont );
@@ -153,17 +150,14 @@ void fix_app( Aperture* ap, double d ){
 */
 
 //Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y ){
-Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int mirror_y ){
+Cont_t* poligon( double _x, double _y, Aperture* ap, double offset, int inside, int mirror_x, int mirror_y ){
 	Point_t* prev = NULL;
 	Point_t* next = NULL;
 	Point_t* start = NULL;
-
 	Context_t* ctx_curr = get_context();
 	Context_t* ctx_dst = create_context("dst_macro");
 	Context_t* ctx = create_context("tmp_macro");
-
 	select_context( ctx->name );
-
 	Cont_t* cont = create_cont();
 	for( int i = 0; i < ap->points_len; i++ ){
 		if( next ) prev = next;
@@ -181,15 +175,8 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int
 		add_item2cont( (Refitem_t*) l, cont );
 	}
 	cont_reorder( cont, -1 );
-
-	outline_milling( cont, ctx_dst, d, 1 );
-
+	outline_milling( cont, ctx_dst, offset, inside?1:-1 );
 	select_context( ctx_dst->name );
-
-//printf("---\n");
-//walk_around_all_cont("svg", stdout);
-
-
 	for( int i=0; i < ctx_dst->links.count; i++){
 		Refitem_t* item = (Refitem_t*) ctx_dst->links.arr[i];
 		if( item->type == OBJ_TYPE_CONTUR ){
@@ -198,15 +185,11 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int
 			break;
 		}
 	}
-
-    cont = last_cont(ctx_curr);
-
+	cont = last_cont(ctx_curr);
 	free_context_by_name( ctx->name );
 	free_context_by_name( ctx_dst->name );
 	select_context( ctx_curr->name );
-
 	cont_reorder( cont, -1 );
-
 	return cont;
 };
 
@@ -257,13 +240,14 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int
 //walk_around_all_cont("svg", stdout);
 */
 
-void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
+void grb_macro_touch(double _x1, double _y1, Aperture* ap, double uoffset, int inside, int debug){
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
-	double d = env_d("tool_d");
-	Cont_t* cont = poligon(x1, y1, ap, d, mirror_x, mirror_y);
+//	double offset = env_d("tool_d")/2;
+//	double inside = env_d("tool_inside");
+	Cont_t* cont = poligon(x1, y1, ap, uoffset, inside, mirror_x, mirror_y);
 	int r = cont_reorder( cont, -1 );
 	if( r = -1 ){
 		Refholder_t* list = split_all(0);
@@ -602,9 +586,9 @@ void parse_coordinate_command(const char* line, GerberState* state) {
         //printf("OFFSET: %f\n", offset);
         if (ap->type == 'C') {
             //printf("ap->param1: %f; SIZE: %f\n",ap->param1,  ap->param1 + offset);
-            printf(" grb_line_milling start with R = %f \n", ap->param1  );
+            //printf(" grb_line_milling start with R = %f \n", ap->param1  );
             grb_line_milling( state->x, state->y, new_x, new_y, ap->param1 + offset, debug );
-            printf(" grb_line_milling ok \n");
+            //printf(" grb_line_milling ok \n");
         }else if (ap->type == 'R') {
             grb_ra_line( state->x, state->y, new_x, new_y, ap->param1 + offset, ap->param2 + offset, debug );
         }else if (ap->type == 'M') {
@@ -619,15 +603,16 @@ void parse_coordinate_command(const char* line, GerberState* state) {
     }else if (d_code == 3) {  // D03 - коснуться инструментом в одной точке
         double tool_d = env_d("tool_d");
         int tinside  = env_i("tool_inside");
-        double offset = ( tinside?(-tool_d):(tool_d) );
-        if (ap->type == 'C') {
-            grb_line_milling( new_x, new_y, new_x, new_y, ap->param1+offset, debug );
-        }else if (ap->type == 'R') {
-            grb_ra_line( new_x, new_y, new_x, new_y, ap->param1+offset, ap->param2+offset, debug );
-        }else if (ap->type == 'M') {
+        double uoffset = tool_d/2;
+        double offset = ( tinside?(-uoffset):(uoffset) );
+        if( ap->type == 'C' ){
+            grb_line_milling( new_x, new_y, new_x, new_y, ap->param1 + 2*offset, debug );
+        }else if( ap->type == 'R' ){
+            grb_ra_line( new_x, new_y, new_x, new_y, ap->param1 + 2*offset, ap->param2 + 2*offset, debug );
+        }else if( ap->type == 'M' ){
             Macro* m = macro_by_name(state, ap->macro);
             //printf("M: %s %i\n\n", m->macro, m->len);
-            grb_macro_touch( new_x, new_y, ap, debug );
+            grb_macro_touch( new_x, new_y, ap, uoffset, tinside, debug );
             //exit(1);
         }
         state->x = new_x;
