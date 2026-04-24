@@ -13,10 +13,15 @@
 #include "../include/cont.h"
 #include "../include/line.h"
 #include "../include/arc.h"
+#include "../include/mergcont.h"
+
+#include "../include/excellon.h"
+#include "../include/export.h"
 
 #define MAX_VERTICES 6
 
 void punch_milling( double x, double y, double d, int dir, Cont_t** cont1 ){
+    //printf("punch_milling: %f\n", d);
 	*cont1 = NULL;
 	*cont1 = create_cont();
     Point_t* p1 = create_p(x, y - d*0.8);
@@ -27,10 +32,18 @@ void punch_milling( double x, double y, double d, int dir, Cont_t** cont1 ){
     Line_t* l2 = create_line( p2, p3 );
     Line_t* l3 = create_line( p3, p4 );
     Line_t* l4 = create_line( p4, p1 );
+    Line_t* l5 = create_line( p1, p3 );
+    Line_t* l6 = create_line( p3, p4 );
+    Line_t* l7 = create_line( p4, p2 );
+    Line_t* l8 = create_line( p2, p1 );
 	add_item2cont( (Refitem_t*) l1, *cont1);
 	add_item2cont( (Refitem_t*) l2, *cont1);
 	add_item2cont( (Refitem_t*) l3, *cont1);
 	add_item2cont( (Refitem_t*) l4, *cont1);
+	add_item2cont( (Refitem_t*) l5, *cont1);
+	add_item2cont( (Refitem_t*) l6, *cont1);
+	add_item2cont( (Refitem_t*) l7, *cont1);
+	add_item2cont( (Refitem_t*) l8, *cont1);
 	return;
 }
 
@@ -55,7 +68,7 @@ void line_milling( double x1, double y1, double x2, double y2, double R, int dir
 			// Дуга на старте
 			Arc_t* arc1 = create_arc(x1, y1, R);
 			add_item2cont( (Refitem_t*) arc1, *cont1);
-			break_the_circle(arc1, d, dir);
+			break_the_circle(arc1, d, -1);
 			Arc_t* new_arc1 = split_arc_by_p(arc1, c);
 			remove_arc( &new_arc1 );
 			// ПРЯМАЯ1 слева, по движению
@@ -63,7 +76,7 @@ void line_milling( double x1, double y1, double x2, double y2, double R, int dir
 			// Дуга на финише
 			Arc_t* arc2 = create_arc(x2, y2, R);
 			add_item2cont( (Refitem_t*) arc2, *cont1);
-			break_the_circle(arc2, e, dir);
+			break_the_circle(arc2, e, -1);
 			Arc_t* new_arc2 = split_arc_by_p(arc2, f);
 			remove_arc( &new_arc2 );
 			// ПРЯМАЯ2 справа, по движению
@@ -71,6 +84,7 @@ void line_milling( double x1, double y1, double x2, double y2, double R, int dir
 			cont_reorder(*cont1, dir); // Направление контура определяет с какой стороны конутра заполнение. Заполнение всегда СПРАВА. Если обходим контур по часовой стрелки, значит заполняем контур, если обходим против, то заполняем всё, кроме контура
 		}
 	}
+	//printf("line_milling ok \n" );
 	return;
 };
 
@@ -398,13 +412,13 @@ Cont_t* ra_line( double x1, double y1, double x2, double y2, double W, double H,
 /*
 * Обрисовка контура круглым инструментом
 */
-void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r){
+void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r, int dir){
 	Context_t* ctx = get_context();
 	Context_t* ctx_tmp = NULL;
 	if( cont ){
 		ctx_tmp = create_context("milling_tmp");
-		select_context("milling_tmp");
-//		copy_ctx2ctx( ctx->name, ctx_tmp->name, cont );
+		copy_ctx2ctx( ctx->name, ctx_tmp->name, cont );
+		select_context(ctx_tmp->name);
 		if( cont->links.arr ){
 			for( int i=0; i < cont->links.count; i++ ){
 				Refitem_t* item = cont->links.arr[i];
@@ -414,41 +428,47 @@ void outline_milling(Cont_t* cont, Context_t* ctx_dst, double r){
 					Arc_t* arc = NULL;
 					Line_t* line = NULL;
 					if(item->type == OBJ_TYPE_LINE){
+//						printf("milling line!!\n");
 						line = (Line_t *) item;
-						//printf("Отрезок!\n");
-						line_milling( line->a->x, line->a->y, line->b->x, line->b->y, r, -1, &new_cont1 );
+						line_milling( line->a->x, line->a->y, line->b->x, line->b->y, r, dir, &new_cont1 );
 					}else if(item->type == OBJ_TYPE_ARC){
+//						printf("milling arc!!\n");
 						arc = (Arc_t *) item;
-						//printf("Дуга! Dir = %i\n", arc->dir);
-						arc_milling( arc, r, -1, &new_cont1, &new_cont2 );
+						arc_milling( arc, r, dir, &new_cont1, &new_cont2 );
 					}
 					if( new_cont2 ){
 						fix_single_arc_cont( new_cont2 );
 					}
+//printf("===\n");
+//walk_around_all_cont("svg", stdout);
 					if( new_cont1 ){
+						//cont_reorder(new_cont1, 1);
+						//printf("MERGE with contour 1 (dir: %i)!\n", new_cont1->dir);
 						fix_single_arc_cont( new_cont1 );
-						split_all(0);
-						//walk_around_all_points();
-						calc_contcount4all(new_cont1->num, 0);
-						marking_of_imposed(); // Маркируем совпадающие грани контуров
-						clean_all_cont();
+						Refholder_t* list = split_all(0);
+						push2list( (Refitem_t*) new_cont1, &list );
+						//printf("List LEN: %i\n", list_len(list) );
+						find_areas( list );
+						clean_conts_by_list( &list );
 						find_all_conts();
-						//walk_around_all_cont("svg", 10);
 					}
 				}
 			}
+//printf("+++\n");
+//walk_around_all_cont("svg", stdout);
 		}
-		//printf("\n");
-		//walk_around_all_cont("svg", 10);
-		// Копируем контуры, совпадающие с исходным по напрвлению в целевой контекст
+		// Копируем контуры
+		//printf("ctx_tmp->links.count == [%i]\n", ctx_tmp->links.count );
 		for( int i=0; i < ctx_tmp->links.count; i++){
 			Refitem_t* item = (Refitem_t*) ctx_tmp->links.arr[i];
+			//printf("item->type: %i\n", item->type);
 			if( item->type == OBJ_TYPE_CONTUR ){
+				//printf("OBJ_TYPE_CONTUR\n");
 				Cont_t* next = (Cont_t*) item;
-				if( cont->dir == next->dir ){
-					//printf("копирую\n");
+				//printf("cont->dir[%i] == next->dir[%i]\n", cont->dir, next->dir );
+				//if( dir == next->dir ){
 					copy_ctx2ctx( ctx_tmp->name, ctx_dst->name, next );
-				}
+				//}
 			}
 		}
 		select_context( ctx->name );			// переключаемся на исходный контекст

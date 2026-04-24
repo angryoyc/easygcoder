@@ -32,6 +32,7 @@ void cp_links( Refitem_t* src, Refitem_t* dst);
 int obj_count(Refitem_t* item, Obj_Type_t type);
 char* obj_type(Refitem_t* item);
 Refitem_t* first_obj_by_type( Refitem_t* item, Obj_Type_t type );
+Refitem_t* last_obj_by_type( Refitem_t* item, Obj_Type_t type );
 void push2list( Refitem_t* item, Refholder_t** list );
 int list_len( Refholder_t* list );
 

@@ -90,41 +90,13 @@ void grb_center_punching(double _x, double _y, int debug){
 
 
 void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double diameter, int debug ){
-	// Svg_env_t* env,
-	//select_context("main");
-	//int debug = 0;
-	double d = env_d("tool_d");
-	d = diameter/2 + d/2;
 	Cont_t* cont = NULL;
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
-
-	/*
-	if( cont && cont->links.arr && (cont->links.count>1) ){
-		count = count + 1;
-		//if( cont->links.count > 0 ){
-			for(int i = 0; i < cont->links.count; i++){
-				Refitem_t* item = cont->links.arr[i];
-				if( item->type == OBJ_TYPE_LINE ){
-					Line_t* a1 = (Line_t*) item;
-					//printf("Nespheratum finding %i...\n", a1->id);
-					if( a1->id == 1886 ){
-						printf("Nespheratum founded!!!\n");
-						debug = 1;
-					}
-				}
-			}
-		//}
-	}
-	*/
-
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double x2 = round_to_decimal(_x2, 2) * (mirror_y?-1:1);
 	double y2 = round_to_decimal(_y2, 2) * (mirror_x?-1:1);
-
-	//if( count == 2 ) debug = 1;
-
 	/*
 	if( debug ){
 		line_milling( x1, y1, x2, y2, round_to_decimal(d, 2), -1, &cont );
@@ -135,18 +107,57 @@ void grb_line_milling(double _x1, double _y1, double _x2, double _y2, double dia
 		find_all_conts();
 	}
 	*/
-
-	line_milling( x1, y1, x2, y2, round_to_decimal(d, 2), -1, &cont );
+	double R = diameter/2;
+	R = round_to_decimal(R, 2);
+	if( R <= 0 ) R = 0.01;
+	line_milling( x1, y1, x2, y2, R , -1, &cont );
 	Refholder_t* list = split_all(0);
 	find_areas( list );
 	clean_conts_by_list( &list );
 	find_all_conts();
 }
 
-Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y ){
+/*
+void fix_app( Aperture* ap, double d ){
+	Context_t* ctx_dst = create_context("dst_macro");
+	Context_t* ctx = create_context("tmp_macro");
+	Cont_t* cont = create_cont();
+	Point_t* prev = NULL;
+	Point_t* first = NULL;
+	if( ap->points_len >0 ){
+		for( int i = 0; i < ap->points_len; i++){
+			Point_t* curr = create_p(ap->points[i].x, ap->points[i].y);
+			if( !first ) first = curr;
+			if( prev ){
+				Line_t *l = create_line( prev, curr);
+				add_item2cont((Refitem_t*) l, cont );
+			}
+			prev = curr;
+		}
+		Line_t *l = create_line( prev, first);
+		add_item2cont( (Refitem_t*) l, cont );
+		cont_reorder( cont, -1 );
+	}
+	outline_milling( cont, ctx_dst, d/2 );
+	select_context( ctx_dst->name );
+
+		printf("\n");
+		walk_around_all_cont("svg", stdout);
+
+	free_context_by_name( ctx_dst->name );
+	free_context_by_name( ctx->name );
+};
+*/
+
+//Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y ){
+Cont_t* poligon( double _x, double _y, Aperture* ap, double offset, int inside, int mirror_x, int mirror_y ){
 	Point_t* prev = NULL;
 	Point_t* next = NULL;
 	Point_t* start = NULL;
+	Context_t* ctx_curr = get_context();
+	Context_t* ctx_dst = create_context("dst_macro");
+	Context_t* ctx = create_context("tmp_macro");
+	select_context( ctx->name );
 	Cont_t* cont = create_cont();
 	for( int i = 0; i < ap->points_len; i++ ){
 		if( next ) prev = next;
@@ -163,17 +174,80 @@ Cont_t* poligon( double _x, double _y, Aperture* ap, int mirror_x, int mirror_y 
 		Line_t* l = create_line( next, start );
 		add_item2cont( (Refitem_t*) l, cont );
 	}
+	cont_reorder( cont, -1 );
+	outline_milling( cont, ctx_dst, offset, inside?1:-1 );
+	select_context( ctx_dst->name );
+	for( int i=0; i < ctx_dst->links.count; i++){
+		Refitem_t* item = (Refitem_t*) ctx_dst->links.arr[i];
+		if( item->type == OBJ_TYPE_CONTUR ){
+			Cont_t* next = (Cont_t*) item;
+			copy_ctx2ctx( ctx_dst->name, ctx_curr->name, next );
+			break;
+		}
+	}
+	cont = last_cont(ctx_curr);
+	free_context_by_name( ctx->name );
+	free_context_by_name( ctx_dst->name );
+	select_context( ctx_curr->name );
+	cont_reorder( cont, -1 );
 	return cont;
 };
 
-void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
+
+/*
+Cont_t* poligon( double _x, double _y, Aperture* ap, double d, int mirror_x, int mirror_y ){
+    printf("poligon d=%f\n", d);
+	Point_t* prev = NULL;
+	Point_t* start = NULL;
+	Context_t* ctx_curr = get_context();
+	Context_t* ctx_dst = create_context("dst_macro");
+	Context_t* ctx = create_context("tmp_macro");
+	Cont_t* cont = create_cont();
+	if( ap->points_len > 0 ){
+		for( int i = 0; i < ap->points_len; i++ ){
+			double x = round_to_decimal(ap->points[i].x, 2) * (mirror_y?-1:1);
+			double y = round_to_decimal(ap->points[i].y, 2) * (mirror_x?-1:1);
+			Point_t* curr = create_p( _x + x, _y + y );
+			if( !start ) start = curr;
+			if( prev ){
+				Line_t* l = create_line( prev, curr );
+				add_item2cont( (Refitem_t*) l, cont );
+			}
+			prev = curr;
+		}
+		Line_t* l = create_line( prev, start );
+		add_item2cont( (Refitem_t*) l, cont );
+		cont_reorder( cont, -1 );
+	}
+	outline_milling( cont, ctx_dst, d, -1 );
+
+	for( int i=0; i < ctx_dst->links.count; i++){
+		Refitem_t* item = (Refitem_t*) ctx_dst->links.arr[i];
+		if( item->type == OBJ_TYPE_CONTUR ){
+			Cont_t* next = (Cont_t*) item;
+			copy_ctx2ctx( ctx_dst->name, ctx_curr->name, next );
+			break;
+		}
+	}
+	select_context( ctx_dst->name );
+	free_context_by_name( ctx->name );
+	select_context( ctx_curr->name );
+	free_context_by_name( ctx_dst->name );
+	return cont;
+};
+
+//printf("---\n");
+//walk_around_all_cont("svg", stdout);
+*/
+
+void grb_macro_touch(double _x1, double _y1, Aperture* ap, double uoffset, int inside, int debug){
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
-	double d = env_d("tool_d");
-	d = d/2;
-	Cont_t* cont = poligon(x1, y1, ap, mirror_x, mirror_y);
+//	double offset = env_d("tool_d")/2;
+//	double inside = env_d("tool_inside");
+	Cont_t* cont = poligon(x1, y1, ap, uoffset, inside, mirror_x, mirror_y);
 	int r = cont_reorder( cont, -1 );
 	if( r = -1 ){
 		Refholder_t* list = split_all(0);
@@ -186,17 +260,14 @@ void grb_macro_touch(double _x1, double _y1, Aperture* ap, int debug){
 
 void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, double height, int debug){
 	// Svg_env_t* env,
-	double d = env_d("tool_d");
-	d = d/2;
 	int mirror_x = env_i("mirror_x");
 	int mirror_y = env_i("mirror_y");
-
 	double x1 = round_to_decimal(_x1, 2) * (mirror_y?-1:1);
 	double y1 = round_to_decimal(_y1, 2) * (mirror_x?-1:1);
 	double x2 = round_to_decimal(_x2, 2) * (mirror_y?-1:1);
 	double y2 = round_to_decimal(_y2, 2) * (mirror_x?-1:1);
-	Cont_t* cont = ra_line( x1, y1, x2, y2, round_to_decimal(width + d, 2), round_to_decimal(height + d, 2), -1 );
-	
+	Cont_t* cont = ra_line( x1, y1, x2, y2, round_to_decimal(width, 2), round_to_decimal(height, 2), -1 );
+
 	//int debug = 0;
 	/*
 	Все оттестировано, но наш бронепоезд.... ну вы знаете.
@@ -221,13 +292,7 @@ void grb_ra_line(double _x1, double _y1, double _x2, double _y2, double width, d
 		find_areas( list );
 		clean_conts_by_list( &list );
 		find_all_conts();
-//		split_all(0);
-//		calc_contcount4all( 0, debug );
-//		marking_of_imposed(); // Маркируем совпадающие грани контуров
-//		clean_all_cont();
-//		find_all_conts();
 		if( debug ){
-			//walk_around_all_cont("svg", stdout);
 			exit(0);
 		}
 	}
@@ -277,7 +342,7 @@ Aperture* find_aperture(GerberState* state, int number){
 
 // Парсинг определения макроса
 void parse_macros_definition( const char* line, GerberState* state ){
-    printf("parse_macros_definition\n");
+    //printf("parse_macros_definition\n");
 	char macroName[32];
 	int primCode, exposure, count, offset = 0;
 	// 1. Парсим имя до '*' и три числа после
@@ -359,9 +424,10 @@ double get_par( Macro* mc, double arg[], int i){
 }
 
 
+
 // Парсинг определения апертуры
 void parse_aperture_definition( const char* line, GerberState* state ){
-	printf("parse_aperture_definition\n");
+	//printf("parse_aperture_definition\n");
 	char type;
 	int num;
 	char params[100];
@@ -398,9 +464,10 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 		*ap->macro = 'M';
 		strcpy( ap->macro+1, macroName );
 		state->aperture_count++;
-		printf("parse_aperture_definition with macro %s\n", ap->macro);
+		//printf("parse_aperture_definition with macro %s\n", ap->macro);
 		Macro* mc = macro_by_name(state, ap->macro );
 		if( mc ){
+			double d = env_d("tool_d");
 			int code = (int) mc->params[0].value;
 			if( code == 4 ){ //просто полигон по точкам
 				int expl = (int) mc->params[1].value;
@@ -410,6 +477,7 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 					ap->points[i].y = mc->params[3+i*2+1].value;
 				}
 				ap->points_len = count;
+				//fix_app( ap, d );
 			}else if(code==21){
 				ap->points_len = 4;
 				char* ptr = (char*) line + bytes;
@@ -433,7 +501,7 @@ void parse_aperture_definition( const char* line, GerberState* state ){
 			printf("Macro %s not found\n", macroName);
 		}
 	}
-	printf("end of parse_aperture_definition\n");
+	//printf("end of parse_aperture_definition\n");
 }
 
 
@@ -493,11 +561,6 @@ void parse_coordinate_command(const char* line, GerberState* state) {
 		message(1, "\r%i lines processed...", grbr_lines_count++ );
 	}
 
-//	if( strcmp("X-1016000Y-4686300D01*", line) == 0){
-//		printf("DEBUG MODE ENABLED!!!\n");
-//		debug = 1;
-//	}
-
 //	printf("grbr_lines_count   =   %i\n", grbr_lines_count);
 	//if( grbr_lines_count == 2 ) debug = 1;
 
@@ -518,10 +581,17 @@ void parse_coordinate_command(const char* line, GerberState* state) {
     }
     // Выполняем команду
     if (d_code == 1) {  // D01 - фрезеровать по линии
+        double tool_d = env_d("tool_d");
+        int tinside  = env_i("tool_inside");
+        double offset = ( tinside?(-tool_d):(tool_d) );
+        //printf("OFFSET: %f\n", offset);
         if (ap->type == 'C') {
-            grb_line_milling( state->x, state->y, new_x, new_y, ap->param1, debug );
+            //printf("ap->param1: %f; SIZE: %f\n",ap->param1,  ap->param1 + offset);
+            //printf(" grb_line_milling start with R = %f \n", ap->param1  );
+            grb_line_milling( state->x, state->y, new_x, new_y, ap->param1 + offset, debug );
+            //printf(" grb_line_milling ok \n");
         }else if (ap->type == 'R') {
-            grb_ra_line( state->x, state->y, new_x, new_y, ap->param1, ap->param2, debug );
+            grb_ra_line( state->x, state->y, new_x, new_y, ap->param1 + offset, ap->param2 + offset, debug );
         }else if (ap->type == 'M') {
             fprintf(stderr, "Error: Function not implemented: move polygon\n");
         }
@@ -532,14 +602,18 @@ void parse_coordinate_command(const char* line, GerberState* state) {
         state->y = new_y;
         //printf("MOVE to: (%.4f,%.4f)\n", new_x, new_y);
     }else if (d_code == 3) {  // D03 - коснуться инструментом в одной точке
-        if (ap->type == 'C') {
-            grb_line_milling( new_x, new_y, new_x, new_y, ap->param1, debug );
-        }else if (ap->type == 'R') {
-            grb_ra_line( new_x, new_y, new_x, new_y, ap->param1, ap->param2, debug );
-        }else if (ap->type == 'M') {
+        double tool_d = env_d("tool_d");
+        int tinside  = env_i("tool_inside");
+        double uoffset = tool_d/2;
+        double offset = ( tinside?(-uoffset):(uoffset) );
+        if( ap->type == 'C' ){
+            grb_line_milling( new_x, new_y, new_x, new_y, ap->param1 + 2*offset, debug );
+        }else if( ap->type == 'R' ){
+            grb_ra_line( new_x, new_y, new_x, new_y, ap->param1 + 2*offset, ap->param2 + 2*offset, debug );
+        }else if( ap->type == 'M' ){
             Macro* m = macro_by_name(state, ap->macro);
             //printf("M: %s %i\n\n", m->macro, m->len);
-            grb_macro_touch( new_x, new_y, ap, debug );
+            grb_macro_touch( new_x, new_y, ap, uoffset, tinside, debug );
             //exit(1);
         }
         state->x = new_x;

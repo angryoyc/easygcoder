@@ -101,7 +101,7 @@ uint8_t arc_dir( Arc_t* arc, Point_t* a, Point_t* b, Point_t* c ){
 	return  c_on_ccw_arc;
 }
 
-void replace_arc_a( Arc_t* arc, Point_t* p){
+int replace_arc_a( Arc_t* arc, Point_t* p){
 	if( arc->a != p ){
 		Point_t* old = arc->a;
 		cp_links( (Refitem_t*) old, (Refitem_t*) p);
@@ -109,10 +109,12 @@ void replace_arc_a( Arc_t* arc, Point_t* p){
 		remove_p( &old );
 		arc->a = p;
 		linkobj2obj( arc, arc->a );
+		return 1;
 	}
+	return 0;
 }
 
-void replace_arc_b( Arc_t* arc, Point_t* p){
+int replace_arc_b( Arc_t* arc, Point_t* p){
 	if( arc->b != p ){
 		Point_t* old = arc->b;
 		cp_links( (Refitem_t*) old, (Refitem_t*) p);
@@ -120,7 +122,9 @@ void replace_arc_b( Arc_t* arc, Point_t* p){
 		remove_p( &old );
 		arc->b = p;
 		linkobj2obj( arc, arc->b );
+		return 1;
 	}
+	return 0;
 }
 
 

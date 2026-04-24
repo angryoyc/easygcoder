@@ -241,6 +241,19 @@ Refitem_t* first_obj_by_type( Refitem_t* item, Obj_Type_t type ){
 	return obj;
 }
 
+Refitem_t* last_obj_by_type( Refitem_t* item, Obj_Type_t type ){
+	Refitem_t* obj = NULL;
+	if( item && item->links.arr && item->links.count >0 ){
+		for( int i = item->links.count-1; i < item->links.count; i-- ){
+			if( ( (Refitem_t*) item->links.arr[i])->type == type ){
+				obj = (Refitem_t*) item->links.arr[i];
+				break;
+			}
+		}
+	}
+	return obj;
+}
+
 int list_len( Refholder_t* list ){
 	int len = 0;
 	Refholder_t* curr = list;

@@ -318,10 +318,10 @@ int split_arc_by_line( Arc_t* arc, Line_t* l){
 					split_line_by_p( l, p1 );
 					s++;
 				}
-				if( p_eq_p(p1, l->a) && (p1 != l->a) ){ replace_a(l, p1);/* printf("<<La>>\n");*/}
-				if( p_eq_p(p1, l->b) && (p1 != l->b) ){ replace_b(l, p1);/* printf("<<Lb>>\n");*/}
-				if( p_eq_p(p1, arc->a) && (p1 != arc->a) ){ replace_arc_a(arc, p1);/* printf("<<Aa>>\n");*/}
-				if( p_eq_p(p1, arc->b) && (p1 != arc->b) ){ replace_arc_b(arc, p1);/* printf("<<Ab>>\n");*/}
+				if( p_eq_p(p1, l->a) && (p1 != l->a) ){ s+=replace_a(l, p1);/* printf("<<La>>\n");*/}
+				if( p_eq_p(p1, l->b) && (p1 != l->b) ){ s+=replace_b(l, p1);/* printf("<<Lb>>\n");*/}
+				if( p_eq_p(p1, arc->a) && (p1 != arc->a) ){ s+=replace_arc_a(arc, p1);/* printf("<<Aa>>\n");*/}
+				if( p_eq_p(p1, arc->b) && (p1 != arc->b) ){ s+=replace_arc_b(arc, p1);/* printf("<<Ab>>\n");*/}
 			}else{
 				// два пересечения
 				// printf("// два пересечения\n");
@@ -346,15 +346,15 @@ int split_arc_by_line( Arc_t* arc, Line_t* l){
 					split_line_by_p( l,   p2 );
 					s++;
 				}
-				if( p_eq_p(p1, l->a)   && (p1 != l->a) ) replace_a(l, p1);
-				if( p_eq_p(p1, l->b)   && (p1 != l->b) ) replace_b(l, p1);
-				if( p_eq_p(p1, arc->a) && (p1 != arc->a) ) replace_arc_a(arc, p1);
-				if( p_eq_p(p1, arc->b) && (p1 != arc->b) ) replace_arc_b(arc, p1);
+				if( p_eq_p(p1, l->a)   && (p1 != l->a) ) s+=replace_a(l, p1);
+				if( p_eq_p(p1, l->b)   && (p1 != l->b) ) s+=replace_b(l, p1);
+				if( p_eq_p(p1, arc->a) && (p1 != arc->a) ) s+=replace_arc_a(arc, p1);
+				if( p_eq_p(p1, arc->b) && (p1 != arc->b) ) s+=replace_arc_b(arc, p1);
 
-				if( p_eq_p(p2, l->a)   && (p2 != l->a) ) replace_a(l, p2);
-				if( p_eq_p(p2, l->b)   && (p2 != l->b) ) replace_b(l, p2);
-				if( p_eq_p(p2, arc->a) && (p2 != arc->a) ) replace_arc_a(arc, p2);
-				if( p_eq_p(p2, arc->b) && (p2 != arc->b) ) replace_arc_b(arc, p2);
+				if( p_eq_p(p2, l->a)   && (p2 != l->a) ) s+=replace_a(l, p2);
+				if( p_eq_p(p2, l->b)   && (p2 != l->b) ) s+=replace_b(l, p2);
+				if( p_eq_p(p2, arc->a) && (p2 != arc->a) ) s+=replace_arc_a(arc, p2);
+				if( p_eq_p(p2, arc->b) && (p2 != arc->b) ) s+=replace_arc_b(arc, p2);
 
 			}
 		}else{
@@ -376,10 +376,10 @@ int split_arc_by_line( Arc_t* arc, Line_t* l){
 				split_line_by_p( l, p1 );
 				s++;
 			}
-			if( p_eq_p(p1, l->a) && (p1 != l->a) ) replace_a(l, p1);
-			if( p_eq_p(p1, l->b) && (p1 != l->b) ) replace_b(l, p1);
-			if( p_eq_p(p1, arc->a) && (p1 != arc->a) ) replace_arc_a(arc, p1);
-			if( p_eq_p(p1, arc->b) && (p1 != arc->b) ) replace_arc_b(arc, p1);
+			if( p_eq_p(p1, l->a) && (p1 != l->a) ) s+=replace_a(l, p1);
+			if( p_eq_p(p1, l->b) && (p1 != l->b) ) s+=replace_b(l, p1);
+			if( p_eq_p(p1, arc->a) && (p1 != arc->a) ) s+=replace_arc_a(arc, p1);
+			if( p_eq_p(p1, arc->b) && (p1 != arc->b) ) s+=replace_arc_b(arc, p1);
 		}
 	}else{
 		// нет пересечений (ничо не делаем)
@@ -455,8 +455,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list2, &listlen2, p1);
 				s++;
 			}else{
-				if( p_eq_p(p1, arc2->a) && (arc2->a != p1) ) replace_arc_a(arc2, p1);
-				if( p_eq_p(p1, arc2->b) && (arc2->b != p1) ) replace_arc_b(arc2, p1);
+				if( p_eq_p(p1, arc2->a) && (arc2->a != p1) ) s+=replace_arc_a(arc2, p1);
+				if( p_eq_p(p1, arc2->b) && (arc2->b != p1) ) s+=replace_arc_b(arc2, p1);
 			}
 			p1a1 = p1a1 >> 1;
 			if( (bitmap & p1a1) == 0 ){ // p1 не совпадает с концами дуги a1
@@ -464,8 +464,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list1, &listlen1, p1);
 				s++;
 			}else{
-				if( p_eq_p(p1, arc1->a) && (arc1->a != p1) ) replace_arc_a(arc1, p1);
-				if( p_eq_p(p1, arc1->b) && (arc1->b != p1) ) replace_arc_b(arc1, p1);
+				if( p_eq_p(p1, arc1->a) && (arc1->a != p1) ) s+=replace_arc_a(arc1, p1);
+				if( p_eq_p(p1, arc1->b) && (arc1->b != p1) ) s+=replace_arc_b(arc1, p1);
 			}
 		}
 		uint8_t p2a2 = (1 << 1); // p2 on a2
@@ -478,8 +478,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list2, &listlen2, p2);
 				s++;
 			}else{
-				if( p_eq_p(p2, arc2->a) && (arc2->a != p2) ) replace_arc_a(arc2, p2);
-				if( p_eq_p(p2, arc2->b) && (arc2->b != p2) ) replace_arc_b(arc2, p2);
+				if( p_eq_p(p2, arc2->a) && (arc2->a != p2) ) s+=replace_arc_a(arc2, p2);
+				if( p_eq_p(p2, arc2->b) && (arc2->b != p2) ) s+=replace_arc_b(arc2, p2);
 			}
 			p2a1 = p2a1 >> 1;
 			if( (bitmap & p2a1) == 0 ){ // p2 не совпадает с концами дуги a1
@@ -487,8 +487,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list1, &listlen1, p2);
 				s++;
 			}else{
-				if( p_eq_p(p2, arc1->a) && (arc1->a != p2) ) replace_arc_a(arc1, p2);
-				if( p_eq_p(p2, arc1->b) && (arc1->b != p2) ) replace_arc_b(arc1, p2);
+				if( p_eq_p(p2, arc1->a) && (arc1->a != p2) ) s+=replace_arc_a(arc1, p2);
+				if( p_eq_p(p2, arc1->b) && (arc1->b != p2) ) s+=replace_arc_b(arc1, p2);
 			}
 		}
 	}
@@ -505,8 +505,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list1, &listlen1, p1);
 				s++;
 			}else{
-				if( p_eq_p(p1, arc1->a) && (arc1->a != p1) ) replace_arc_a(arc1, p1);
-				if( p_eq_p(p1, arc1->b) && (arc1->b != p1) ) replace_arc_b(arc1, p1);
+				if( p_eq_p(p1, arc1->a) && (arc1->a != p1) ) s+=replace_arc_a(arc1, p1);
+				if( p_eq_p(p1, arc1->b) && (arc1->b != p1) ) s+=replace_arc_b(arc1, p1);
 			}
 			p1a1 = p1a1 >> 1;
 			if( (bitmap & p1a1) == 0 ){ // p1 не совпадает с концами дуги a2
@@ -514,8 +514,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list2, &listlen2, p1);
 				s++;
 			}else{
-				if( p_eq_p(p1, arc2->a) && (arc2->a != p1) ) replace_arc_a(arc2, p1);
-				if( p_eq_p(p1, arc2->b) && (arc2->b != p1) ) replace_arc_b(arc2, p1);
+				if( p_eq_p(p1, arc2->a) && (arc2->a != p1) ) s+=replace_arc_a(arc2, p1);
+				if( p_eq_p(p1, arc2->b) && (arc2->b != p1) ) s+=replace_arc_b(arc2, p1);
 			}
 		}
 		uint8_t p2a2 = (1 << 1); // p2 on a2
@@ -528,8 +528,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list1, &listlen1, p2);
 				s++;
 			}else{
-				if( p_eq_p(p2, arc1->a) && (arc1->a != p2) ) replace_arc_a(arc1, p2);
-				if( p_eq_p(p2, arc1->b) && (arc1->b != p2) ) replace_arc_b(arc1, p2);
+				if( p_eq_p(p2, arc1->a) && (arc1->a != p2) ) s+=replace_arc_a(arc1, p2);
+				if( p_eq_p(p2, arc1->b) && (arc1->b != p2) ) s+=replace_arc_b(arc1, p2);
 			}
 			p2a1 = p2a1 >> 1;
 			if( (bitmap & p2a1) == 0 ){ // p2 не совпадает с концами дуги a2
@@ -537,8 +537,8 @@ int split_arc_by_arc( Arc_t* arc1, Arc_t* arc2 ){
 				append2list(list2, &listlen2, p2);
 				s++;
 			}else{
-				if( p_eq_p(p2, arc2->a) && (arc2->a != p2) ) replace_arc_a(arc2, p2);
-				if( p_eq_p(p2, arc2->b) && (arc2->b != p2) ) replace_arc_b(arc2, p2);
+				if( p_eq_p(p2, arc2->a) && (arc2->a != p2) ) s+=replace_arc_a(arc2, p2);
+				if( p_eq_p(p2, arc2->b) && (arc2->b != p2) ) s+=replace_arc_b(arc2, p2);
 			}
 		}
 	}
@@ -730,7 +730,7 @@ int split_item_by_item( Refitem_t* item1, Refitem_t* item2, int debug){
 		}else if( ret==6 ){
 		}else if( ret==7 ){
 			//if(debug && ret) printf("// Пересечение линий %i\n", ret);
-			replace_same_p2lines(l1, l2);
+			s+=replace_same_p2lines(l1, l2);
 		}else if( ret==8 ){
 			//if(debug && ret) printf("// Пересечение линий %i\n", ret);
 			if( p1 && p_ne_p( p1, l1->a) && p_ne_p( p1, l1->b) ){
@@ -783,14 +783,14 @@ int split_item_by_item( Refitem_t* item1, Refitem_t* item2, int debug){
 				//printf("// l1 внутри l2 => резать надо l2 на три куска а l1 не трогаем\n");
 				// находим точку которая не принадлежит обоим концам другого (l2) отрезка
 				if( p_ne_p( p1, l2->a) && p_ne_p( p1, l2->b) ){ // Это точка p1 ею надо резать l2
-					replace_same_p2lines(l1, l2);
+					s+=replace_same_p2lines(l1, l2);
 					split_line_by_p( l2, p1 );
-					s++;
+					//s++;
 				}
 				if( p_ne_p( p2, l2->a) && p_ne_p( p2, l2->b) ){ // Это точка p2 ею надо резать l2
-					replace_same_p2lines(l1, l2);
+					s+=replace_same_p2lines(l1, l2);
 					split_line_by_p( l2, p2 );
-					s++;
+					//s++;
 				}
 			}
 			if( p_eq_p( p1, l2->a) && p_eq_p( p2, l2->b) ){ // l2 внутри l1 => резать надо l1 на три куска а l2 не трогаем
@@ -798,20 +798,20 @@ int split_item_by_item( Refitem_t* item1, Refitem_t* item2, int debug){
 				// находим точку которая не принадлежит обоим концам другого (l1) отрезка
 				if( p_ne_p( p1, l1->a) && p_ne_p( p1, l1->b) ){ // Это точка p1 ею надо резать l1
 					//printf("// p1 не совпадает с концами l1\n");
-					replace_same_p2lines(l1, l2);
+					s+=replace_same_p2lines(l1, l2);
 					split_line_by_p( l1, p1 );
-					s++;
+					//s++;
 				}
 				if( p_ne_p( p2, l1->a) && p_ne_p( p2, l1->b) ){ // Это точка p2 ею надо резать l1
 					//printf("// p2 не совпадает с концами l1\n");
-					replace_same_p2lines(l1, l2);
+					s+=replace_same_p2lines(l1, l2);
 					split_line_by_p( l1, p2 );
-					s++;
+					//s++;
 				}
 			}
 		}else if( ret==11 ){
 			//if(debug && ret) printf("// Пересечение линий %i\n", ret);
-			replace_same_p2lines(l1, l2);
+			s+=replace_same_p2lines(l1, l2);
 			//split_line_by_p( l1, p2 );
 		}
 		//if( debug ) printf("// Пересечение линий done\n");

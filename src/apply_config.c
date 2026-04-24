@@ -113,7 +113,7 @@ void set_dbl_param(struct pair ** config, char* name, double defval, char* conff
 	}
 	if( strval && (strlen(strval))>0 ){
 		val = strtod(strval, &end );
-		if(  end == strval ){
+		if( end == strval ){
 			fprintf(stderr, "Config error in parameter %s\n", name);
 			exit(1);
 		};
@@ -239,6 +239,7 @@ void apply_config(char* conffile){
 	if( conffile ) config = conf_load( conffile );
 
 	set_dbl_param(config, "tool_d", TOOL_D, conffile);
+	set_int_param(config, "tool_inside", TOOL_INSIDE, conffile);
 	set_dbl_param(config, "tool_ch_height", TOOL_CH_HEIGHT, conffile);
 
 	set_int_param(config, "svg_m", SVG_M, conffile);
